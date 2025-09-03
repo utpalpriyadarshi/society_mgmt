@@ -1,0 +1,20 @@
+SocietyManagementSystem/
+├── main.py
+├── database.py
+├── models/
+│   ├── resident.py
+│   ├── ledger.py
+│   ├── expense.py
+│   └── user.py
+├── gui/
+│   ├── main_window.py
+│   ├── login_dialog.py
+│   ├── resident_form.py
+│   ├── payment_form.py
+│   ├── expense_form.py
+│   └── reports_dialog.py
+├── utils/
+│   ├── validators.py
+│   ├── security.py
+│   └── exporters.py
+└── backups/
