@@ -8,7 +8,7 @@ from utils.security import authenticate_user
 class LoginDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Login - Society Management System")
+        self.setWindowTitle("Login - Society Management System v1.1")
         self.setFixedSize(600, 600)  # Set size to 600x600 as requested
         self.setWindowFlags(Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint)
         self.setup_ui()
