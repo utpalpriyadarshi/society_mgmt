@@ -8,6 +8,8 @@ from PyQt5.QtWidgets import (QWidget, QTableWidget, QTableWidgetItem,
 from PyQt5.QtCore import QDate
 from models.ledger import LedgerManager
 from models.resident import ResidentManager
+from models.transaction_reversal import TransactionReversalManager
+from gui.reversal_dialog import ReversalDialog
 
 class LedgerForm(QWidget):
     def __init__(self, parent=None, current_user=None):
@@ -44,8 +46,21 @@ class LedgerForm(QWidget):
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         
         main_layout.addWidget(QLabel("Ledger Transactions:"))
+        
+        # Add buttons for transaction actions
+        button_layout = QHBoxLayout()
+        self.reverse_button = QPushButton("Reverse Selected Transaction")
+        self.reverse_button.clicked.connect(self.reverse_transaction)
+        self.reverse_button.setEnabled(False)
+        button_layout.addWidget(self.reverse_button)
+        button_layout.addStretch()
+        
+        main_layout.addLayout(button_layout)
         main_layout.addWidget(self.table)
         self.setLayout(main_layout)
+        
+        # Connect table selection to enable/disable buttons
+        self.table.itemSelectionChanged.connect(self.on_selection_changed)
     
     def load_transactions(self):
         transactions = self.ledger_manager.get_all_transactions()
@@ -65,6 +80,45 @@ class LedgerForm(QWidget):
             self.table.setItem(row, 9, QTableWidgetItem(transaction.payment_mode))
             self.table.setItem(row, 10, QTableWidgetItem(transaction.entered_by))
             self.table.setItem(row, 11, QTableWidgetItem(transaction.created_at or ""))
+
+    def on_selection_changed(self):
+        """Enable/disable buttons based on table selection"""
+        selected_rows = self.table.selectionModel().selectedRows()
+        self.reverse_button.setEnabled(len(selected_rows) == 1)
+    
+    def reverse_transaction(self):
+        """Open reversal dialog for selected transaction"""
+        selected_rows = self.table.selectionModel().selectedRows()
+        if len(selected_rows) != 1:
+            QMessageBox.warning(self, "Selection Error", "Please select exactly one transaction to reverse.")
+            return
+        
+        row = selected_rows[0].row()
+        transaction_id = self.table.item(row, 0).text()
+        
+        # Get transaction details
+        transactions = self.ledger_manager.get_all_transactions()
+        selected_transaction = None
+        for txn in transactions:
+            if txn.transaction_id == transaction_id:
+                selected_transaction = txn
+                break
+        
+        if not selected_transaction:
+            QMessageBox.warning(self, "Error", "Could not find transaction details.")
+            return
+        
+        # Check if transaction can be reversed
+        can_reverse, reason = self.ledger_manager.can_reverse_transaction(transaction_id)
+        if not can_reverse:
+            QMessageBox.warning(self, "Error", reason)
+            return
+        
+        # Open reversal dialog
+        dialog = ReversalDialog(transaction_id, selected_transaction, self.current_user, self)
+        if dialog.exec_() == QDialog.Accepted:
+            # Refresh the ledger display
+            self.load_transactions()
 
 class PaymentTab(QWidget):
     def __init__(self, parent=None, current_user=None):
