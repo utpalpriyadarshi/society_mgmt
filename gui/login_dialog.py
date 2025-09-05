@@ -4,6 +4,9 @@ from PyQt5.QtWidgets import (QDialog, QLabel, QLineEdit,
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from utils.security import authenticate_user
+from utils.session_manager import session_manager
+from utils.db_context import get_db_connection
+from datetime import datetime
 
 class LoginDialog(QDialog):
     def __init__(self, parent=None):
@@ -151,8 +154,31 @@ class LoginDialog(QDialog):
         # Use proper authentication
         user_role = authenticate_user(username, password)
         if user_role:
+            # Create a session for the user
+            session_id = session_manager.create_session(username)
+            # In a real application, you would store the session_id securely
+            # For this example, we'll just print it
+            print(f"Session created for {username}: {session_id}")
             self.accept()
         else:
-            QMessageBox.warning(self, "Login Failed", "Invalid username or password")
+            # Check if the account is locked
+            locked_until = None
+            with get_db_connection('society_management.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                SELECT locked_until FROM users WHERE username = ?
+                ''', (username,))
+                
+                result = cursor.fetchone()
+                if result and result[0]:
+                    locked_until = datetime.fromisoformat(result[0])
+            
+            if locked_until and datetime.now() < locked_until:
+                remaining_time = locked_until - datetime.now()
+                minutes = int(remaining_time.total_seconds() // 60)
+                QMessageBox.warning(self, "Login Failed", f"Account is locked. Please try again in {minutes} minutes.")
+            else:
+                QMessageBox.warning(self, "Login Failed", "Invalid username or password")
+            
             self.password_input.clear()
             self.password_input.setFocus()
