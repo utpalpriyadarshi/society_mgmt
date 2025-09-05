@@ -61,7 +61,9 @@ class Database:
             id INTEGER PRIMARY KEY,
             username TEXT UNIQUE,
             password_hash TEXT,
-            role TEXT
+            role TEXT,
+            failed_login_attempts INTEGER DEFAULT 0,
+            locked_until TIMESTAMP DEFAULT NULL
         )
         ''')
         
