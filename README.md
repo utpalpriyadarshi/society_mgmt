@@ -146,7 +146,7 @@ The application generates various PDF reports:
 5. **Expenses Report**: Detailed list of all expense transactions with transaction IDs, dates, categories, descriptions, amounts, payment modes, and entered by information, with date range filtering.
 6. **Payment Summary Report**: Summary of payments grouped by category with both summary view and detailed transaction list including transaction IDs and dates, with date range filtering.
 7. **Expense Summary Report**: Summary of expenses grouped by category with both summary view and detailed transaction list including transaction IDs and dates, with date range filtering.
-8. **Resident List Report**: Complete list of all residents with their details.
+8. **Resident List Report**: Complete list of all residents.
 
 All reports include:
 - Society header with name, address, and contact information
@@ -173,6 +173,27 @@ To create a backup:
 
 It's recommended to create regular backups of the database, especially before making significant changes or updates to the system.
 
+## Login Security
+
+The application implements login security measures to protect against unauthorized access:
+
+- **Account Lockout**: After 5 failed login attempts, an account is locked for 30 minutes
+- **Failed Attempt Tracking**: The system tracks failed login attempts for each user
+- **Automatic Unlock**: Locked accounts are automatically unlocked after the lockout period expires
+
+### Resetting Login Security
+
+If accounts become locked and you need to reset the security measures, you can use the provided reset script:
+
+```bash
+python reset_login_security.py
+```
+
+This script will:
+- Reset failed login attempts for all users to 0
+- Unlock any accounts that were locked due to failed attempts
+- Display the security status before and after the reset
+
 ## Recent Improvements
 
 - Enhanced watermark visibility by placing it at three horizontal locations (top, middle, and bottom) instead of a single rotated watermark
@@ -181,6 +202,8 @@ It's recommended to create regular backups of the database, especially before ma
 - Made date range fields always visible and functional for all report types in the GUI
 - Implemented proper error handling and user feedback for all report generation operations
 - Added database backup functionality accessible through the File menu
+- Implemented login security with account lockout after multiple failed attempts
+- Added login security reset functionality
 
 ## Database
 
