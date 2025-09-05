@@ -68,3 +68,4 @@ The system uses a role-based access control mechanism (System Admin, Admin, Trea
 - Passwords are hashed using SHA-256 before being stored or compared.
 - The application structure separates concerns into GUI, database, models, and utilities.
 - Helper scripts for development and database operations are stored in the `ai_agent_utils/` directory.
+- All helper scripts created during development should be placed in the `ai_agent_utils/` directory to keep the main project directory clean and organized.
