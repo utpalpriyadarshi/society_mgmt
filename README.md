@@ -40,7 +40,7 @@ python main.py
 
 On first run, a default System Admin user is created:
 - **Username**: `sysadmin`
-- **Password**: `systemadmin`
+- **Password**: `******`
 
 It's highly recommended to change this password after the first login.
 
