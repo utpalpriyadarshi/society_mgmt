@@ -24,6 +24,8 @@ class Database:
             cars INTEGER,
             scooters INTEGER,
             parking_slot TEXT,
+            car_numbers TEXT,
+            scooter_numbers TEXT,
             monthly_charges REAL DEFAULT 500.0,
             status TEXT,
             remarks TEXT

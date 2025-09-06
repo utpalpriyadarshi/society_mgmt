@@ -4,7 +4,7 @@ from datetime import datetime
 
 class Resident:
     def __init__(self, resident_id, flat_no, name, resident_type, mobile_no, email, date_joining, 
-                 cars, scooters, parking_slot, monthly_charges, status, remarks):
+                 cars, scooters, parking_slot, car_numbers, scooter_numbers, monthly_charges, status, remarks):
         self.id = resident_id
         self.flat_no = flat_no
         self.name = name
@@ -15,6 +15,8 @@ class Resident:
         self.cars = cars
         self.scooters = scooters
         self.parking_slot = parking_slot
+        self.car_numbers = car_numbers
+        self.scooter_numbers = scooter_numbers
         self.monthly_charges = monthly_charges
         self.status = status
         self.remarks = remarks
@@ -29,7 +31,7 @@ class ResidentManager:
         
         cursor.execute('''
             SELECT id, flat_no, name, resident_type, mobile_no, email, date_joining,
-                   cars, scooters, parking_slot, monthly_charges, status, remarks
+                   cars, scooters, parking_slot, car_numbers, scooter_numbers, monthly_charges, status, remarks
             FROM residents
         ''')
         
@@ -40,7 +42,7 @@ class ResidentManager:
         for row in rows:
             resident = Resident(
                 row[0], row[1], row[2], row[3], row[4], row[5], row[6],
-                row[7], row[8], row[9], row[10], row[11], row[12]
+                row[7], row[8], row[9], row[10], row[11], row[12], row[13], row[14]
             )
             residents.append(resident)
         
@@ -52,7 +54,7 @@ class ResidentManager:
         
         cursor.execute('''
             SELECT id, flat_no, name, resident_type, mobile_no, email, date_joining,
-                   cars, scooters, parking_slot, monthly_charges, status, remarks
+                   cars, scooters, parking_slot, car_numbers, scooter_numbers, monthly_charges, status, remarks
             FROM residents WHERE id = ?
         ''', (resident_id,))
         
@@ -62,7 +64,7 @@ class ResidentManager:
         if row:
             return Resident(
                 row[0], row[1], row[2], row[3], row[4], row[5], row[6],
-                row[7], row[8], row[9], row[10], row[11], row[12]
+                row[7], row[8], row[9], row[10], row[11], row[12], row[13], row[14]
             )
         return None
     
@@ -73,7 +75,7 @@ class ResidentManager:
         search_pattern = f"%{search_term}%"
         cursor.execute('''
             SELECT id, flat_no, name, resident_type, mobile_no, email, date_joining,
-                   cars, scooters, parking_slot, monthly_charges, status, remarks
+                   cars, scooters, parking_slot, car_numbers, scooter_numbers, monthly_charges, status, remarks
             FROM residents
             WHERE flat_no LIKE ? OR name LIKE ? OR mobile_no LIKE ? OR email LIKE ?
         ''', (search_pattern, search_pattern, search_pattern, search_pattern))
@@ -85,14 +87,14 @@ class ResidentManager:
         for row in rows:
             resident = Resident(
                 row[0], row[1], row[2], row[3], row[4], row[5], row[6],
-                row[7], row[8], row[9], row[10], row[11], row[12]
+                row[7], row[8], row[9], row[10], row[11], row[12], row[13], row[14]
             )
             residents.append(resident)
         
         return residents
     
     def add_resident(self, flat_no, name, resident_type, mobile_no, email, date_joining,
-                     cars, scooters, parking_slot, monthly_charges, status, remarks):
+                     cars, scooters, parking_slot, car_numbers, scooter_numbers, monthly_charges, status, remarks):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
@@ -102,10 +104,10 @@ class ResidentManager:
             
             cursor.execute('''
                 INSERT INTO residents (flat_no, name, resident_type, mobile_no, email, date_joining,
-                                      cars, scooters, parking_slot, monthly_charges, status, remarks)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                      cars, scooters, parking_slot, car_numbers, scooter_numbers, monthly_charges, status, remarks)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (flat_no, name, resident_type, mobile_no, email, date_joining,
-                  cars, scooters, parking_slot, fixed_charges, status, remarks))
+                  cars, scooters, parking_slot, car_numbers, scooter_numbers, fixed_charges, status, remarks))
             
             conn.commit()
             resident_id = cursor.lastrowid
@@ -116,7 +118,7 @@ class ResidentManager:
             return None  # Duplicate flat_no
     
     def update_resident(self, resident_id, flat_no, name, resident_type, mobile_no, email, date_joining,
-                        cars, scooters, parking_slot, monthly_charges, status, remarks):
+                        cars, scooters, parking_slot, car_numbers, scooter_numbers, monthly_charges, status, remarks):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
@@ -126,10 +128,10 @@ class ResidentManager:
             
             cursor.execute('''
                 UPDATE residents SET flat_no=?, name=?, resident_type=?, mobile_no=?, email=?, date_joining=?,
-                                    cars=?, scooters=?, parking_slot=?, monthly_charges=?, status=?, remarks=?
+                                    cars=?, scooters=?, parking_slot=?, car_numbers=?, scooter_numbers=?, monthly_charges=?, status=?, remarks=?
                 WHERE id=?
             ''', (flat_no, name, resident_type, mobile_no, email, date_joining,
-                  cars, scooters, parking_slot, fixed_charges, status, remarks, resident_id))
+                  cars, scooters, parking_slot, car_numbers, scooter_numbers, fixed_charges, status, remarks, resident_id))
             
             conn.commit()
             conn.close()
