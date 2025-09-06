@@ -12,6 +12,7 @@ A desktop application for managing residential society operations built with Pyt
 - **User Management**: System Admins and Admins can manage user accounts and roles.
 - **Society Configuration**: Set up and manage basic society information.
 - **Database Backup**: Create backups of the entire database for safekeeping.
+- **Dark Mode**: Toggle between light and dark themes for comfortable viewing in different lighting conditions.
 
 ## Technology Stack
 
@@ -204,6 +205,7 @@ This script will:
 - Added database backup functionality accessible through the File menu
 - Implemented login security with account lockout after multiple failed attempts
 - Added login security reset functionality
+- Added dark mode toggle for improved user experience in different lighting conditions
 
 ## Database
 
