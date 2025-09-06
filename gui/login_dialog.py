@@ -11,10 +11,12 @@ from datetime import datetime
 class LoginDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.is_dark_mode = False  # Default to light mode
         self.setWindowTitle("Login - Society Management System v1.1")
         self.setFixedSize(600, 600)  # Set size to 600x600 as requested
         self.setWindowFlags(Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint)
         self.setup_ui()
+        self.apply_theme()
         
     def setup_ui(self):
         # Main layout
@@ -118,7 +120,32 @@ class LoginDialog(QDialog):
         self.login_button.clicked.connect(self.authenticate)
         self.login_button.setCursor(Qt.PointingHandCursor)
         self.login_button.setDefault(True)  # Make this the default button
-        form_layout.addWidget(self.login_button)
+        
+        # Theme toggle button
+        self.theme_button = QPushButton("🌙")
+        self.theme_button.setFixedSize(30, 30)
+        self.theme_button.setStyleSheet("""
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                border-radius: 15px;
+                font-weight: bold;
+                margin-top: 10px;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+        """)
+        self.theme_button.clicked.connect(self.toggle_theme)
+        
+        # Create a horizontal layout for the buttons
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.login_button)
+        button_layout.addStretch()  # Add stretch to push the theme button to the right
+        button_layout.addWidget(self.theme_button)
+        
+        form_layout.addLayout(button_layout)
         
         # Set layout for frame
         form_frame.setLayout(form_layout)
@@ -135,6 +162,110 @@ class LoginDialog(QDialog):
         
         # Set focus to username field
         self.username_input.setFocus()
+    
+    def toggle_theme(self):
+        """Toggle between light and dark mode"""
+        self.is_dark_mode = not self.is_dark_mode
+        self.apply_theme()
+        # Update button icon
+        self.theme_button.setText("☀️" if self.is_dark_mode else "🌙")
+    
+    def apply_theme(self):
+        """Apply the current theme (light or dark mode)"""
+        if self.is_dark_mode:
+            # Dark mode stylesheet
+            self.setStyleSheet("""
+                QDialog {
+                    background-color: #2c3e50;
+                }
+                QLabel {
+                    color: #ecf0f1;
+                }
+                QFrame {
+                    background-color: #34495e;
+                    border-radius: 10px;
+                }
+                QLineEdit {
+                    padding: 12px;
+                    border: 2px solid #7f8c8d;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    background-color: #34495e;
+                    color: #ecf0f1;
+                }
+                QLineEdit:focus {
+                    border-color: #3498db;
+                    outline: none;
+                }
+                QPushButton {
+                    background-color: #3498db;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #2980b9;
+                }
+                QPushButton:pressed {
+                    background-color: #21618c;
+                }
+            """)
+            # Update specific labels
+            for child in self.findChildren(QLabel):
+                if "Society Management System" in child.text():
+                    child.setStyleSheet("color: #ecf0f1; margin-bottom: 5px;")
+                elif "Please sign in" in child.text():
+                    child.setStyleSheet("color: #bdc3c7; font-size: 12px; margin-bottom: 20px;")
+                elif "© 2025" in child.text():
+                    child.setStyleSheet("color: #bdc3c7; font-size: 10px; margin-top: 20px;")
+        else:
+            # Light mode stylesheet (default)
+            self.setStyleSheet("""
+                QDialog {
+                    background-color: white;
+                }
+                QLabel {
+                    color: #2c3e50;
+                }
+                QFrame {
+                    background-color: #f8f9fa;
+                    border-radius: 10px;
+                }
+                QLineEdit {
+                    padding: 12px;
+                    border: 2px solid #ddd;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    background-color: white;
+                    color: #2c3e50;
+                }
+                QLineEdit:focus {
+                    border-color: #3498db;
+                    outline: none;
+                }
+                QPushButton {
+                    background-color: #3498db;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #2980b9;
+                }
+                QPushButton:pressed {
+                    background-color: #21618c;
+                }
+            """)
+            # Update specific labels
+            for child in self.findChildren(QLabel):
+                if "Society Management System" in child.text():
+                    child.setStyleSheet("color: #2c3e50; margin-bottom: 5px;")
+                elif "Please sign in" in child.text():
+                    child.setStyleSheet("color: #7f8c8d; font-size: 12px; margin-bottom: 20px;")
+                elif "© 2025" in child.text():
+                    child.setStyleSheet("color: #95a5a6; font-size: 10px; margin-top: 20px;")
     
     def authenticate(self):
         username = self.username_input.text().strip()
