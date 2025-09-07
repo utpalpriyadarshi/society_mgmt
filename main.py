@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QDialog
-from gui.login_diaglog import LoginDialog
+from gui.login_dialog import LoginDialog
 from gui.main_window import MainWindow
 from utils.security import authenticate_user
 

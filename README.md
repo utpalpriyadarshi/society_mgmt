@@ -7,10 +7,12 @@ A desktop application for managing residential society operations built with Pyt
 - **User Authentication**: Secure login system with role-based access control (System Admin, Admin, Treasurer, Viewer).
 - **Resident Management**: Add, edit, view, and search resident information.
 - **Financial Tracking**: Record and manage payments and expenses with a ledger system.
+- **Transaction Reversal**: Safely reverse erroneous transactions with proper audit trail and documentation.
 - **Reporting**: Generate detailed PDF reports of financial transactions, including outstanding dues reports and income vs expense analysis with charts.
 - **User Management**: System Admins and Admins can manage user accounts and roles.
 - **Society Configuration**: Set up and manage basic society information.
 - **Database Backup**: Create backups of the entire database for safekeeping.
+- **Dark Mode**: Toggle between light and dark themes for comfortable viewing in different lighting conditions.
 
 ## Technology Stack
 
@@ -39,7 +41,7 @@ python main.py
 
 On first run, a default System Admin user is created:
 - **Username**: `sysadmin`
-- **Password**: `systemadmin`
+- **Password**: `******`
 
 It's highly recommended to change this password after the first login.
 
@@ -65,7 +67,8 @@ It's highly recommended to change this password after the first login.
 
 1. **Resident Management**: Handles all resident data.
 2. **Ledger**: Tracks all financial transactions.
-3. **Reports**: Creates PDF reports of ledger data, including:
+3. **Transaction Reversal**: Safely reverse erroneous transactions with proper documentation and audit trail.
+4. **Reports**: Creates PDF reports of ledger data, including:
    - Ledger Report: Complete transaction history
    - Outstanding Dues Report: List of residents with unpaid maintenance fees
    - Income vs Expense Report: Financial analysis with visual charts comparing income and expenses by category
@@ -74,8 +77,8 @@ It's highly recommended to change this password after the first login.
    - Payment Summary Report: Summary of payments by category with detailed transaction list
    - Expense Summary Report: Summary of expenses by category with detailed transaction list
    - Resident List Report: Complete list of all residents
-4. **User Management** (Admin/System Admin only): Manages user accounts.
-5. **Society Setup** (Admin/System Admin only): Configures society details.
+5. **User Management** (Admin/System Admin only): Manages user accounts.
+6. **Society Setup** (Admin/System Admin only): Configures society details.
 
 ## Menu Options
 
@@ -86,6 +89,52 @@ It's highly recommended to change this password after the first login.
 ### Tools Menu (Admin/System Admin only)
 - **User Management**: Manage user accounts and roles
 - **Society Setup**: Configure society information
+
+## Transaction Reversal
+
+The application implements a comprehensive transaction reversal system that follows best accounting practices to ensure accuracy, transparency, and compliance in financial records.
+
+### Key Features
+
+- **Safe Reversal**: Instead of deleting transactions, the system creates reversal entries that maintain a complete audit trail
+- **Authorization Control**: Only authorized users (Admin, Treasurer, System Admin) can reverse transactions
+- **Reason Documentation**: Users must select from predefined reasons and add remarks for each reversal
+- **Audit Trail**: All reversals are tracked with timestamps and user information
+- **Period Management**: Transactions in closed periods are handled according to accounting standards
+- **Error Prevention**: The system prevents duplicate reversals and validates all operations
+
+### How to Reverse a Transaction
+
+1. Navigate to the Ledger tab
+2. Locate the transaction you want to reverse in the transaction table
+3. Select the transaction by clicking on its row
+4. Click the "Reverse Selected Transaction" button
+5. In the reversal dialog:
+   - Review the transaction details
+   - Select a reason for reversal from the dropdown
+   - Add any additional remarks
+   - Click "OK" to complete the reversal
+6. The system will create a new transaction with opposite values and refresh the ledger display
+
+### Reversal Reasons
+
+The system provides predefined reasons for transaction reversals:
+- Entered in Error
+- Duplicate Entry
+- Wrong Amount
+- Wrong Account
+- Wrong Period
+- Other
+
+### Compliance
+
+The transaction reversal system is designed to comply with Generally Accepted Accounting Principles (GAAP) and International Financial Reporting Standards (IFRS) by:
+- Maintaining complete audit trails
+- Preventing permanent deletion of posted transactions
+- Ensuring proper documentation and authorization
+- Following standard accounting period practices
+
+For detailed technical information about the implementation, see [TRANSACTION_REVERSAL_PROCEDURE.md](TRANSACTION_REVERSAL_PROCEDURE.md).
 
 ## Reports
 
@@ -98,7 +147,7 @@ The application generates various PDF reports:
 5. **Expenses Report**: Detailed list of all expense transactions with transaction IDs, dates, categories, descriptions, amounts, payment modes, and entered by information, with date range filtering.
 6. **Payment Summary Report**: Summary of payments grouped by category with both summary view and detailed transaction list including transaction IDs and dates, with date range filtering.
 7. **Expense Summary Report**: Summary of expenses grouped by category with both summary view and detailed transaction list including transaction IDs and dates, with date range filtering.
-8. **Resident List Report**: Complete list of all residents with their details.
+8. **Resident List Report**: Complete list of all residents.
 
 All reports include:
 - Society header with name, address, and contact information
@@ -125,6 +174,27 @@ To create a backup:
 
 It's recommended to create regular backups of the database, especially before making significant changes or updates to the system.
 
+## Login Security
+
+The application implements login security measures to protect against unauthorized access:
+
+- **Account Lockout**: After 5 failed login attempts, an account is locked for 30 minutes
+- **Failed Attempt Tracking**: The system tracks failed login attempts for each user
+- **Automatic Unlock**: Locked accounts are automatically unlocked after the lockout period expires
+
+### Resetting Login Security
+
+If accounts become locked and you need to reset the security measures, you can use the provided reset script:
+
+```bash
+python reset_login_security.py
+```
+
+This script will:
+- Reset failed login attempts for all users to 0
+- Unlock any accounts that were locked due to failed attempts
+- Display the security status before and after the reset
+
 ## Recent Improvements
 
 - Enhanced watermark visibility by placing it at three horizontal locations (top, middle, and bottom) instead of a single rotated watermark
@@ -133,6 +203,9 @@ It's recommended to create regular backups of the database, especially before ma
 - Made date range fields always visible and functional for all report types in the GUI
 - Implemented proper error handling and user feedback for all report generation operations
 - Added database backup functionality accessible through the File menu
+- Implemented login security with account lockout after multiple failed attempts
+- Added login security reset functionality
+- Added dark mode toggle for improved user experience in different lighting conditions
 
 ## Database
 

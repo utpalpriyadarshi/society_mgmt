@@ -29,7 +29,7 @@ The system uses a role-based access control mechanism (System Admin, Admin, Trea
 - `main.py`: Entry point of the application. Initializes the GUI application and shows the login dialog.
 - `database.py`: Contains the `Database` class for initializing and managing the SQLite database schema.
 - `gui/`: Directory containing all PyQt5 GUI components.
-  - `login_diaglog.py`: Implements the login dialog window.
+  - `login_dialog.py`: Implements the login dialog window.
   - `main_window.py`: Implements the main application window with tabbed modules.
   - `resident_form.py`: Implements the resident management tab.
   - `user_management_dialog.py`: Implements the user management dialog.
@@ -68,3 +68,4 @@ The system uses a role-based access control mechanism (System Admin, Admin, Trea
 - Passwords are hashed using SHA-256 before being stored or compared.
 - The application structure separates concerns into GUI, database, models, and utilities.
 - Helper scripts for development and database operations are stored in the `ai_agent_utils/` directory.
+- All helper scripts created during development should be placed in the `ai_agent_utils/` directory to keep the main project directory clean and organized.
