@@ -4,7 +4,8 @@ from datetime import datetime
 
 class LedgerTransaction:
     def __init__(self, id, transaction_id, date, flat_no, transaction_type, category, 
-                 description, debit, credit, balance, payment_mode, entered_by, created_at=None):
+                 description, debit, credit, balance, payment_mode, entered_by, created_at=None,
+                 reconciliation_status="Unreconciled"):
         self.id = id
         self.transaction_id = transaction_id
         self.date = date
@@ -18,6 +19,7 @@ class LedgerTransaction:
         self.payment_mode = payment_mode
         self.entered_by = entered_by
         self.created_at = created_at
+        self.reconciliation_status = reconciliation_status
 
 class LedgerManager:
     def __init__(self, db_path="society_management.db"):
@@ -77,7 +79,7 @@ class LedgerManager:
         if limit:
             cursor.execute('''
                 SELECT id, transaction_id, date, flat_no, transaction_type, category, description,
-                       debit, credit, balance, payment_mode, entered_by, created_at
+                       debit, credit, balance, payment_mode, entered_by, created_at, reconciliation_status
                 FROM ledger
                 ORDER BY date ASC, id ASC
                 LIMIT ?
@@ -85,7 +87,7 @@ class LedgerManager:
         else:
             cursor.execute('''
                 SELECT id, transaction_id, date, flat_no, transaction_type, category, description,
-                       debit, credit, balance, payment_mode, entered_by, created_at
+                       debit, credit, balance, payment_mode, entered_by, created_at, reconciliation_status
                 FROM ledger
                 ORDER BY date ASC, id ASC
             ''')
@@ -97,7 +99,7 @@ class LedgerManager:
         for row in rows:
             transaction = LedgerTransaction(
                 row[0], row[1], row[2], row[3], row[4], row[5],
-                row[6], row[7], row[8], row[9], row[10], row[11], row[12]
+                row[6], row[7], row[8], row[9], row[10], row[11], row[12], row[13]
             )
             transactions.append(transaction)
         
@@ -110,7 +112,7 @@ class LedgerManager:
         
         cursor.execute('''
             SELECT id, transaction_id, date, flat_no, transaction_type, category, description,
-                   debit, credit, balance, payment_mode, entered_by, created_at
+                   debit, credit, balance, payment_mode, entered_by, created_at, reconciliation_status
             FROM ledger
             WHERE flat_no = ?
             ORDER BY date ASC, id ASC
@@ -123,7 +125,7 @@ class LedgerManager:
         for row in rows:
             transaction = LedgerTransaction(
                 row[0], row[1], row[2], row[3], row[4], row[5],
-                row[6], row[7], row[8], row[9], row[10], row[11], row[12]
+                row[6], row[7], row[8], row[9], row[10], row[11], row[12], row[13]
             )
             transactions.append(transaction)
         
@@ -136,7 +138,7 @@ class LedgerManager:
         
         cursor.execute('''
             SELECT id, transaction_id, date, flat_no, transaction_type, category, description,
-                   debit, credit, balance, payment_mode, entered_by, created_at
+                   debit, credit, balance, payment_mode, entered_by, created_at, reconciliation_status
             FROM ledger
             WHERE date BETWEEN ? AND ?
             ORDER BY date ASC, id ASC
@@ -149,7 +151,7 @@ class LedgerManager:
         for row in rows:
             transaction = LedgerTransaction(
                 row[0], row[1], row[2], row[3], row[4], row[5],
-                row[6], row[7], row[8], row[9], row[10], row[11], row[12]
+                row[6], row[7], row[8], row[9], row[10], row[11], row[12], row[13]
             )
             transactions.append(transaction)
         
