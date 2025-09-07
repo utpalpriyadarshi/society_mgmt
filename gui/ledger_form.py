@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import (QWidget, QTableWidget, QTableWidgetItem,
 from PyQt5.QtCore import QDate
 from models.ledger import LedgerManager
 from models.resident import ResidentManager
+from gui.reconciliation_tab import ReconciliationTab
 
 class LedgerForm(QWidget):
     def __init__(self, parent=None, current_user=None):
@@ -21,7 +22,7 @@ class LedgerForm(QWidget):
     def setup_ui(self):
         main_layout = QVBoxLayout()
         
-        # Tab widget for Payments and Expenses
+        # Tab widget for Payments, Expenses, and Reconciliation
         self.tabs = QTabWidget()
         
         # Payment Tab
@@ -32,13 +33,17 @@ class LedgerForm(QWidget):
         self.expense_tab = ExpenseTab(self, self.current_user)
         self.tabs.addTab(self.expense_tab, "Record Expense")
         
+        # Reconciliation Tab
+        self.reconciliation_tab = ReconciliationTab(self, self.current_user)
+        self.tabs.addTab(self.reconciliation_tab, "Reconciliation")
+        
         main_layout.addWidget(self.tabs)
         
         # Ledger Table
         self.table = QTableWidget()
-        self.table.setColumnCount(12)
+        self.table.setColumnCount(13)
         headers = ["Transaction ID", "Date", "Flat No", "Type", "Category", "Description", 
-                  "Debit", "Credit", "Balance", "Payment Mode", "Entered By", "Created At"]
+                  "Debit", "Credit", "Balance", "Payment Mode", "Entered By", "Created At", "Status"]
         self.table.setHorizontalHeaderLabels(headers)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -65,6 +70,7 @@ class LedgerForm(QWidget):
             self.table.setItem(row, 9, QTableWidgetItem(transaction.payment_mode))
             self.table.setItem(row, 10, QTableWidgetItem(transaction.entered_by))
             self.table.setItem(row, 11, QTableWidgetItem(transaction.created_at or ""))
+            self.table.setItem(row, 12, QTableWidgetItem(transaction.reconciliation_status))
 
 class PaymentTab(QWidget):
     def __init__(self, parent=None, current_user=None):

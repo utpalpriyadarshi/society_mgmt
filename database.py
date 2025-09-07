@@ -45,7 +45,37 @@ class Database:
             payment_mode TEXT,
             entered_by TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            reconciliation_status TEXT DEFAULT 'Unreconciled',
             FOREIGN KEY (flat_no) REFERENCES residents(flat_no)
+        )
+        ''')
+        
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS bank_statements (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date DATE,
+            description TEXT,
+            amount REAL,
+            balance REAL,
+            reference_number TEXT,
+            import_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            reconciliation_status TEXT DEFAULT 'Unreconciled',
+            matched_ledger_id INTEGER,
+            FOREIGN KEY (matched_ledger_id) REFERENCES ledger(id)
+        )
+        ''')
+        
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS reconciliation_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            reconciliation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            user TEXT,
+            period_start DATE,
+            period_end DATE,
+            matched_count INTEGER,
+            unmatched_ledger_count INTEGER,
+            unmatched_bank_count INTEGER,
+            notes TEXT
         )
         ''')
         
