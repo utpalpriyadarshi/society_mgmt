@@ -4,3 +4,12 @@ __pycache__/
 .env
 .vscode/
 /ai_agent_utils
+
+# Database files
+*.db
+*.db.backup
+*.sqlite
+*.sqlite3
+
+# Backup files
+*society_management_backup_*.db

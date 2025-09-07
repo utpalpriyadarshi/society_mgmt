@@ -24,6 +24,8 @@ class Database:
             cars INTEGER,
             scooters INTEGER,
             parking_slot TEXT,
+            car_numbers TEXT,
+            scooter_numbers TEXT,
             monthly_charges REAL DEFAULT 500.0,
             status TEXT,
             remarks TEXT
@@ -91,7 +93,9 @@ class Database:
             id INTEGER PRIMARY KEY,
             username TEXT UNIQUE,
             password_hash TEXT,
-            role TEXT
+            role TEXT,
+            failed_login_attempts INTEGER DEFAULT 0,
+            locked_until TIMESTAMP DEFAULT NULL
         )
         ''')
         

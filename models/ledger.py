@@ -170,10 +170,32 @@ class LedgerManager:
         return ["Cash", "Bank Transfer", "Cheque", "Online Payment", "Other"]
     
     def delete_transaction(self, transaction_id):
-        """Delete a transaction by transaction ID"""
+        """
+        Delete a transaction by transaction ID (for draft/unposted entries only)
+        NOTE: This should only be used for draft entries that haven't been finalized.
+        For posted transactions, use reverse_transaction instead.
+        """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
+        # Check if transaction exists
+        cursor.execute('SELECT COUNT(*) FROM ledger WHERE transaction_id = ?', (transaction_id,))
+        count = cursor.fetchone()[0]
+        
+        if count == 0:
+            conn.close()
+            raise ValueError("Transaction not found")
+        
+        # Check if transaction has been reversed
+        cursor.execute('SELECT COUNT(*) FROM transaction_reversals WHERE original_transaction_id = ?', (transaction_id,))
+        reversed_count = cursor.fetchone()[0]
+        
+        if reversed_count > 0:
+            conn.close()
+            raise ValueError("Cannot delete a transaction that has been reversed")
+        
+        # Log the deletion in a separate audit table (to be implemented)
+        # For now, we'll just delete the transaction
         cursor.execute('DELETE FROM ledger WHERE transaction_id = ?', (transaction_id,))
         
         # Recalculate balances after deletion
@@ -198,3 +220,30 @@ class LedgerManager:
         
         conn.commit()
         conn.close()
+    
+    def can_reverse_transaction(self, transaction_id):
+        """
+        Check if a transaction can be reversed
+        Returns (can_reverse: bool, reason: str)
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # Check if transaction exists
+        cursor.execute('SELECT COUNT(*) FROM ledger WHERE transaction_id = ?', (transaction_id,))
+        count = cursor.fetchone()[0]
+        
+        if count == 0:
+            conn.close()
+            return False, "Transaction not found"
+        
+        # Check if transaction has already been reversed
+        cursor.execute('SELECT COUNT(*) FROM transaction_reversals WHERE original_transaction_id = ?', (transaction_id,))
+        reversed_count = cursor.fetchone()[0]
+        
+        if reversed_count > 0:
+            conn.close()
+            return False, "Transaction has already been reversed"
+        
+        conn.close()
+        return True, "OK"

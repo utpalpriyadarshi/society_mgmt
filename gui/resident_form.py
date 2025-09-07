@@ -47,8 +47,8 @@ class ResidentForm(QWidget):
         
         # Table
         self.table = QTableWidget()
-        self.table.setColumnCount(5)  # Only the requested fields + some key info
-        headers = ["ID", "Flat No", "Name", "Phone No", "Email"]
+        self.table.setColumnCount(9)  # Including car and scooter info
+        headers = ["ID", "Flat No", "Name", "Phone No", "Email", "Car Nos", "Scooter Nos", "Cars", "Scooters"]
         self.table.setHorizontalHeaderLabels(headers)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -87,6 +87,31 @@ class ResidentForm(QWidget):
             self.table.setItem(row, 2, QTableWidgetItem(resident.name))
             self.table.setItem(row, 3, QTableWidgetItem(resident.mobile_no))
             self.table.setItem(row, 4, QTableWidgetItem(resident.email))
+            # Display car numbers (first few if many)
+            car_numbers = resident.car_numbers or ""
+            if car_numbers:
+                car_list = [cn.strip() for cn in car_numbers.split('\n') if cn.strip()]
+                display_cars = ", ".join(car_list[:3])  # Show first 3 car numbers
+                if len(car_list) > 3:
+                    display_cars += f" (+{len(car_list)-3} more)"
+            else:
+                display_cars = ""
+            self.table.setItem(row, 5, QTableWidgetItem(display_cars))
+            
+            # Display scooter numbers (first few if many)
+            scooter_numbers = resident.scooter_numbers or ""
+            if scooter_numbers:
+                scooter_list = [sn.strip() for sn in scooter_numbers.split('\n') if sn.strip()]
+                display_scooters = ", ".join(scooter_list[:3])  # Show first 3 scooter numbers
+                if len(scooter_list) > 3:
+                    display_scooters += f" (+{len(scooter_list)-3} more)"
+            else:
+                display_scooters = ""
+            self.table.setItem(row, 6, QTableWidgetItem(display_scooters))
+            
+            # Display counts
+            self.table.setItem(row, 7, QTableWidgetItem(str(resident.cars) if resident.cars else "0"))
+            self.table.setItem(row, 8, QTableWidgetItem(str(resident.scooters) if resident.scooters else "0"))
             
             # Make ID column invisible but still accessible
             self.table.setColumnHidden(0, True)
@@ -108,6 +133,7 @@ class ResidentForm(QWidget):
                 data['flat_no'], data['name'], data['resident_type'],
                 data['mobile_no'], data['email'], data['date_joining'],
                 data['cars'], data['scooters'], data['parking_slot'],
+                data['car_numbers'], data['scooter_numbers'],
                 data['monthly_charges'], data['status'], data['remarks']
             )
             
@@ -140,6 +166,7 @@ class ResidentForm(QWidget):
                 resident_id, data['flat_no'], data['name'], data['resident_type'],
                 data['mobile_no'], data['email'], data['date_joining'],
                 data['cars'], data['scooters'], data['parking_slot'],
+                data['car_numbers'], data['scooter_numbers'],
                 data['monthly_charges'], data['status'], data['remarks']
             )
             
@@ -193,6 +220,7 @@ class ResidentDialog(QDialog):
         # Flat No
         self.flat_no_input = QLineEdit()
         self.flat_no_input.setMaxLength(10)
+        self.flat_no_input.setMaximumWidth(150)
         form_layout.addRow("Flat No*:", self.flat_no_input)
         
         # Name
@@ -226,10 +254,22 @@ class ResidentDialog(QDialog):
         self.cars_input.setRange(0, 10)
         form_layout.addRow("Number of Cars:", self.cars_input)
         
+        # Car Numbers
+        self.car_numbers_input = QTextEdit()
+        self.car_numbers_input.setMaximumHeight(60)
+        self.car_numbers_input.setPlaceholderText("Enter car registration numbers, one per line")
+        form_layout.addRow("Car Numbers:", self.car_numbers_input)
+        
         # Scooters
         self.scooters_input = QSpinBox()
         self.scooters_input.setRange(0, 10)
         form_layout.addRow("Number of Scooters:", self.scooters_input)
+        
+        # Scooter Numbers
+        self.scooter_numbers_input = QTextEdit()
+        self.scooter_numbers_input.setMaximumHeight(60)
+        self.scooter_numbers_input.setPlaceholderText("Enter scooter registration numbers, one per line")
+        form_layout.addRow("Scooter Numbers:", self.scooter_numbers_input)
         
         # Parking Slot
         self.parking_input = QLineEdit()
@@ -283,7 +323,9 @@ class ResidentDialog(QDialog):
             self.date_input.setDate(date)
             
         self.cars_input.setValue(self.resident.cars or 0)
+        self.car_numbers_input.setPlainText(self.resident.car_numbers or "")
         self.scooters_input.setValue(self.resident.scooters or 0)
+        self.scooter_numbers_input.setPlainText(self.resident.scooter_numbers or "")
         self.parking_input.setText(self.resident.parking_slot or "")
         self.charges_input.setValue(self.resident.monthly_charges or 500.0)
         self.status_combo.setCurrentText(self.resident.status or "Active")
@@ -298,7 +340,9 @@ class ResidentDialog(QDialog):
             'email': self.email_input.text().strip(),
             'date_joining': self.date_input.date().toString("yyyy-MM-dd"),
             'cars': self.cars_input.value(),
+            'car_numbers': self.car_numbers_input.toPlainText().strip(),
             'scooters': self.scooters_input.value(),
+            'scooter_numbers': self.scooter_numbers_input.toPlainText().strip(),
             'parking_slot': self.parking_input.text().strip(),
             'monthly_charges': self.charges_input.value(),
             'status': self.status_combo.currentText(),
