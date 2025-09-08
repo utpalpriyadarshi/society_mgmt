@@ -5,8 +5,9 @@ A desktop application for managing residential society operations built with Pyt
 ## Features
 
 - **User Authentication**: Secure login system with role-based access control (System Admin, Admin, Treasurer, Viewer).
-- **Resident Management**: Add, edit, view, and search resident information.
+- **Resident Management**: Add, edit, view, and search resident information with car and scooter tracking.
 - **Financial Tracking**: Record and manage payments and expenses with a ledger system.
+- **Bank Reconciliation**: Match ledger transactions with bank statements (CSV and PDF formats) to ensure financial accuracy.
 - **Transaction Reversal**: Safely reverse erroneous transactions with proper audit trail and documentation.
 - **Reporting**: Generate detailed PDF reports of financial transactions, including outstanding dues reports and income vs expense analysis with charts.
 - **User Management**: System Admins and Admins can manage user accounts and roles.
@@ -22,6 +23,7 @@ A desktop application for managing residential society operations built with Pyt
 - **Reporting**: reportlab (PDF generation)
 - **Data Handling**: pandas, openpyxl (Excel exports)
 - **Data Visualization**: matplotlib (Charts in reports)
+- **PDF Processing**: PyMuPDF (PDF bank statement import)
 
 ## Installation
 
@@ -30,6 +32,10 @@ A desktop application for managing residential society operations built with Pyt
 3. **Install Dependencies**: Run the following command in the project directory:
    ```bash
    pip install -r requirements.txt
+   ```
+4. **Install PDF Processing Library**: For bank statement PDF import functionality:
+   ```bash
+   pip install PyMuPDF
    ```
 
 ## Running the Application
@@ -41,7 +47,7 @@ python main.py
 
 On first run, a default System Admin user is created:
 - **Username**: `sysadmin`
-- **Password**: `******`
+- **Password**: `systemadmin`
 
 It's highly recommended to change this password after the first login.
 
@@ -65,10 +71,11 @@ It's highly recommended to change this password after the first login.
 
 ## Modules
 
-1. **Resident Management**: Handles all resident data.
+1. **Resident Management**: Handles all resident data with enhanced vehicle tracking.
 2. **Ledger**: Tracks all financial transactions.
-3. **Transaction Reversal**: Safely reverse erroneous transactions with proper documentation and audit trail.
-4. **Reports**: Creates PDF reports of ledger data, including:
+3. **Bank Reconciliation**: Match ledger transactions with bank statements to ensure accuracy.
+4. **Transaction Reversal**: Safely reverse erroneous transactions with proper documentation and audit trail.
+5. **Reports**: Creates PDF reports of ledger data, including:
    - Ledger Report: Complete transaction history
    - Outstanding Dues Report: List of residents with unpaid maintenance fees
    - Income vs Expense Report: Financial analysis with visual charts comparing income and expenses by category
@@ -77,8 +84,8 @@ It's highly recommended to change this password after the first login.
    - Payment Summary Report: Summary of payments by category with detailed transaction list
    - Expense Summary Report: Summary of expenses by category with detailed transaction list
    - Resident List Report: Complete list of all residents
-5. **User Management** (Admin/System Admin only): Manages user accounts.
-6. **Society Setup** (Admin/System Admin only): Configures society details.
+6. **User Management** (Admin/System Admin only): Manages user accounts.
+7. **Society Setup** (Admin/System Admin only): Configures society details.
 
 ## Menu Options
 
@@ -89,6 +96,57 @@ It's highly recommended to change this password after the first login.
 ### Tools Menu (Admin/System Admin only)
 - **User Management**: Manage user accounts and roles
 - **Society Setup**: Configure society information
+
+## Bank Reconciliation
+
+The application now includes a comprehensive bank reconciliation feature that allows users to match ledger transactions with bank statements to ensure financial accuracy and detect discrepancies.
+
+### Key Features
+
+- **Multiple Format Support**: Import bank statements in both CSV and PDF formats
+- **Automatic Matching**: Smart algorithm matches transactions based on amount and date proximity
+- **Visual Interface**: Side-by-side view of ledger and bank transactions with color-coded status indicators
+- **Manual Reconciliation**: Select and match transactions manually with confirmation dialogs
+- **Duplicate Prevention**: Prevents importing the same bank statement entries multiple times
+- **Audit Trail**: Tracks all reconciliation activities with timestamps and user information
+
+### How to Use Bank Reconciliation
+
+1. Navigate to the Ledger tab
+2. Click on the "Reconciliation" sub-tab
+3. Set the date range for reconciliation
+4. Click "Import Bank Statement" and select your CSV or PDF file
+5. Click "Find Matches" to identify potential matches between ledger and bank entries
+6. Review highlighted matches (yellow = high confidence)
+7. Select ledger transactions and corresponding bank entries
+8. Click "Mark Selected as Matched" to reconcile
+9. View reconciliation status with color coding:
+   - **Green**: Matched/reconciled entries
+   - **Red**: Unmatched entries
+   - **Yellow**: Potential matches
+
+### Supported Bank Statement Formats
+
+**CSV Format**: 
+- Automatically detects common column names (Date, Description, Amount, Balance, Reference)
+- Supports various date formats (DD/MM/YYYY, MM/DD/YYYY, etc.)
+- Handles different number formats and currency symbols
+
+**PDF Format**:
+- Extracts text content using PyMuPDF library
+- Parses transaction data using regular expressions
+- Supports common transaction patterns:
+  - `DD/MM/YYYY Description Amount`
+  - `DD-MM-YYYY Description Amount`
+
+### Technical Implementation
+
+The reconciliation system includes:
+- Database schema updates with reconciliation status tracking
+- Dedicated models for bank statement management
+- Intelligent matching algorithm with confidence scoring
+- Duplicate prevention mechanisms
+- Comprehensive error handling and user feedback
 
 ## Transaction Reversal
 
@@ -206,12 +264,23 @@ This script will:
 - Implemented login security with account lockout after multiple failed attempts
 - Added login security reset functionality
 - Added dark mode toggle for improved user experience in different lighting conditions
+- **Added bank reconciliation feature with CSV and PDF import support**
+- **Enhanced resident management with car and scooter number tracking**
+- **Implemented comprehensive transaction reversal system**
+- **Enhanced database error handling with comprehensive testing procedures**
 
 ## Database
 
 The application uses an SQLite database (`society_management.db`) to store all data. A backup of the initial database schema is provided as `society_management.db.backup`.
 
 Helper scripts for development and database setup are available in the `ai_agent_utils` directory.
+
+## Testing
+
+Comprehensive testing procedures are available for verifying the application's functionality:
+
+1. **Database Error Handling Testing**: See [DATABASE_ERROR_HANDLING_TESTING_PROCEDURE.md](DATABASE_ERROR_HANDLING_TESTING_PROCEDURE.md) and [DATABASE_ERROR_HANDLING_TESTING_USAGE.md](DATABASE_ERROR_HANDLING_TESTING_USAGE.md)
+2. **Login Security Testing**: Run `python test_login_security.py`
 
 ## License
 
