@@ -71,10 +71,14 @@ class ResidentForm(QWidget):
         if not text:
             self.load_residents()
             return
-        
-        residents = self.resident_manager.search_residents(text)
-        self.display_residents(residents)
-    
+            
+        try:
+            residents = self.resident_manager.search_residents(text)
+            self.display_residents(residents)
+        except Exception as e:
+            from utils.database_error_handler import handle_database_error
+            handle_database_error(self, e, "search residents")
+
     def display_residents(self, residents):
         # Sort residents by flat number
         residents.sort(key=lambda x: self._extract_flat_number(x.flat_no))
@@ -129,19 +133,23 @@ class ResidentForm(QWidget):
             # Set fixed monthly charges
             data['monthly_charges'] = 500.0
             
-            resident_id = self.resident_manager.add_resident(
-                data['flat_no'], data['name'], data['resident_type'],
-                data['mobile_no'], data['email'], data['date_joining'],
-                data['cars'], data['scooters'], data['parking_slot'],
-                data['car_numbers'], data['scooter_numbers'],
-                data['monthly_charges'], data['status'], data['remarks']
-            )
-            
-            if resident_id:
-                QMessageBox.information(self, "Success", "Resident added successfully!")
-                self.load_residents()
-            else:
-                QMessageBox.warning(self, "Error", "Failed to add resident. Flat number might already exist.")
+            try:
+                resident_id = self.resident_manager.add_resident(
+                    data['flat_no'], data['name'], data['resident_type'],
+                    data['mobile_no'], data['email'], data['date_joining'],
+                    data['cars'], data['scooters'], data['parking_slot'],
+                    data['car_numbers'], data['scooter_numbers'],
+                    data['monthly_charges'], data['status'], data['remarks']
+                )
+                
+                if resident_id:
+                    QMessageBox.information(self, "Success", "Resident added successfully!")
+                    self.load_residents()
+                else:
+                    QMessageBox.warning(self, "Error", "Failed to add resident. Flat number might already exist.")
+            except Exception as e:
+                from utils.database_error_handler import handle_database_error
+                handle_database_error(self, e, "add resident")
     
     def edit_resident(self):
         selected_rows = self.table.selectionModel().selectedRows()
@@ -162,19 +170,23 @@ class ResidentForm(QWidget):
             # Set fixed monthly charges
             data['monthly_charges'] = 500.0
             
-            success = self.resident_manager.update_resident(
-                resident_id, data['flat_no'], data['name'], data['resident_type'],
-                data['mobile_no'], data['email'], data['date_joining'],
-                data['cars'], data['scooters'], data['parking_slot'],
-                data['car_numbers'], data['scooter_numbers'],
-                data['monthly_charges'], data['status'], data['remarks']
-            )
-            
-            if success:
-                QMessageBox.information(self, "Success", "Resident updated successfully!")
-                self.load_residents()
-            else:
-                QMessageBox.warning(self, "Error", "Failed to update resident. Flat number might already exist.")
+            try:
+                success = self.resident_manager.update_resident(
+                    resident_id, data['flat_no'], data['name'], data['resident_type'],
+                    data['mobile_no'], data['email'], data['date_joining'],
+                    data['cars'], data['scooters'], data['parking_slot'],
+                    data['car_numbers'], data['scooter_numbers'],
+                    data['monthly_charges'], data['status'], data['remarks']
+                )
+                
+                if success:
+                    QMessageBox.information(self, "Success", "Resident updated successfully!")
+                    self.load_residents()
+                else:
+                    QMessageBox.warning(self, "Error", "Failed to update resident. Flat number might already exist.")
+            except Exception as e:
+                from utils.database_error_handler import handle_database_error
+                handle_database_error(self, e, "update resident")
     
     def delete_resident(self):
         selected_rows = self.table.selectionModel().selectedRows()
@@ -192,13 +204,21 @@ class ResidentForm(QWidget):
         )
         
         if reply == QMessageBox.Yes:
-            self.resident_manager.delete_resident(resident_id)
-            QMessageBox.information(self, "Success", "Resident deleted successfully!")
-            self.load_residents()
+            try:
+                self.resident_manager.delete_resident(resident_id)
+                QMessageBox.information(self, "Success", "Resident deleted successfully!")
+                self.load_residents()
+            except Exception as e:
+                from utils.database_error_handler import handle_database_error
+                handle_database_error(self, e, "delete resident")
     
     def load_residents(self):
-        residents = self.resident_manager.get_all_residents()
-        self.display_residents(residents)
+        try:
+            residents = self.resident_manager.get_all_residents()
+            self.display_residents(residents)
+        except Exception as e:
+            from utils.database_error_handler import handle_database_error
+            handle_database_error(self, e, "load residents")
 
 class ResidentDialog(QDialog):
     def __init__(self, parent=None, resident=None, user_role=None):
