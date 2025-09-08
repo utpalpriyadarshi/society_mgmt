@@ -282,11 +282,16 @@ class LoginDialog(QDialog):
             self.password_input.setFocus()
             return
         
-        # Use proper authentication
-        user_role = authenticate_user(username, password)
+        # Create a session for the user (to get session ID for audit logging)
+        session_id = session_manager.create_session(username)
+        
+        # Use proper authentication with audit logging
+        # Note: In a real application, you would get the actual IP address
+        # For now, we'll use a placeholder
+        ip_address = "127.0.0.1"  # Placeholder for local testing
+        user_role = authenticate_user(username, password, ip_address, session_id)
+        
         if user_role:
-            # Create a session for the user
-            session_id = session_manager.create_session(username)
             # In a real application, you would store the session_id securely
             # For this example, we'll just print it
             print(f"Session created for {username}: {session_id}")

@@ -2,6 +2,10 @@
 import sqlite3
 from datetime import datetime
 from models.ledger import LedgerManager, LedgerTransaction
+from utils.db_context import get_db_connection
+from utils.database_exceptions import DatabaseError
+from utils.audit_logger import audit_logger
+from utils.security import get_user_id
 
 class ReversalReason:
     """Enumeration of valid reversal reasons"""
@@ -76,35 +80,31 @@ class TransactionReversalManager:
             raise ValueError("Invalid reversal reason")
         
         # Check if transaction exists
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT id, transaction_id, date, flat_no, transaction_type, category, 
-                   description, debit, credit, payment_mode, entered_by
-            FROM ledger WHERE transaction_id = ?
-        ''', (original_transaction_id,))
-        
-        row = cursor.fetchone()
-        if not row:
-            conn.close()
-            raise ValueError("Transaction not found")
-        
-        original_txn = LedgerTransaction(
-            row[0], row[1], row[2], row[3], row[4], row[5],
-            row[6], row[7], row[8], 0.0, row[9], row[10]  # Balance set to 0 initially
-        )
-        
-        # Check if transaction is already reversed
-        cursor.execute('''
-            SELECT id FROM transaction_reversals WHERE original_transaction_id = ?
-        ''', (original_transaction_id,))
-        
-        if cursor.fetchone():
-            conn.close()
-            raise ValueError("Transaction has already been reversed")
-        
-        conn.close()
+        with get_db_connection(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                SELECT id, transaction_id, date, flat_no, transaction_type, category, 
+                       description, debit, credit, payment_mode, entered_by
+                FROM ledger WHERE transaction_id = ?
+            ''', (original_transaction_id,))
+            
+            row = cursor.fetchone()
+            if not row:
+                raise ValueError("Transaction not found")
+            
+            original_txn = LedgerTransaction(
+                row[0], row[1], row[2], row[3], row[4], row[5],
+                row[6], row[7], row[8], 0.0, row[9], row[10]  # Balance set to 0 initially
+            )
+            
+            # Check if transaction is already reversed
+            cursor.execute('''
+                SELECT id FROM transaction_reversals WHERE original_transaction_id = ?
+            ''', (original_transaction_id,))
+            
+            if cursor.fetchone():
+                raise ValueError("Transaction has already been reversed")
         
         # Create reversal transaction with opposite values
         reversal_type = "Payment Reversal" if original_txn.transaction_type == "Payment" else "Expense Reversal"
@@ -131,17 +131,52 @@ class TransactionReversalManager:
             return None
         
         # Record the reversal in the reversals table
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT INTO transaction_reversals 
-            (original_transaction_id, reversal_transaction_id, reason, remarks, reversed_by)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (original_transaction_id, reversal_transaction_id, reason, remarks, reversed_by))
-        
-        conn.commit()
-        conn.close()
+        with get_db_connection(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                INSERT INTO transaction_reversals 
+                (original_transaction_id, reversal_transaction_id, reason, remarks, reversed_by)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (original_transaction_id, reversal_transaction_id, reason, remarks, reversed_by))
+            
+            conn.commit()
+            
+            # Log the reversal action
+            user_id = get_user_id(reversed_by) if reversed_by else None
+            old_values = {
+                'transaction_id': original_txn.transaction_id,
+                'date': original_txn.date,
+                'flat_no': original_txn.flat_no,
+                'transaction_type': original_txn.transaction_type,
+                'category': original_txn.category,
+                'description': original_txn.description,
+                'debit': original_txn.debit,
+                'credit': original_txn.credit,
+                'payment_mode': original_txn.payment_mode,
+                'entered_by': original_txn.entered_by
+            }
+            
+            new_values = {
+                'reversal_transaction_id': reversal_transaction_id,
+                'reversal_date': datetime.now().strftime("%Y-%m-%d"),
+                'reversal_type': reversal_type,
+                'reversal_description': reversal_description,
+                'reversal_debit': original_txn.credit,
+                'reversal_credit': original_txn.debit,
+                'reason': reason,
+                'remarks': remarks
+            }
+            
+            audit_logger.log_data_change(
+                user_id=user_id or -1,
+                username=reversed_by or "Unknown",
+                action="REVERSE_TRANSACTION",
+                table_name="ledger",
+                record_id=None,
+                old_values=old_values,
+                new_values=new_values
+            )
         
         return reversal_transaction_id
     
