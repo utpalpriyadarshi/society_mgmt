@@ -44,8 +44,7 @@ class LedgerForm(QWidget):
         # Ledger Table
         self.table = QTableWidget()
         self.table.setColumnCount(13)
-        headers = ["Transaction ID", "Date", "Flat No", "Type", "Category", "Description", 
-                  "Debit", "Credit", "Balance", "Payment Mode", "Entered By", "Created At", "Status"]
+        headers = ["Transaction ID", "Date", "Flat No", "Type", "Category", "Description", "Debit", "Credit", "Balance", "Payment Mode", "Entered By", "Created At", "Status"]
         self.table.setHorizontalHeaderLabels(headers)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
