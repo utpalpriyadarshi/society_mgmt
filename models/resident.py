@@ -2,6 +2,9 @@
 from datetime import datetime
 from utils.db_context import get_db_connection
 from utils.database_exceptions import DatabaseError
+from utils.audit_logger import audit_logger
+from utils.security import get_user_id
+
 
 class Resident:
     def __init__(self, resident_id, flat_no, name, resident_type, mobile_no, email, date_joining, 
@@ -21,6 +24,7 @@ class Resident:
         self.monthly_charges = monthly_charges
         self.status = status
         self.remarks = remarks
+
 
 class ResidentManager:
     def __init__(self, db_path="society_management.db"):
@@ -113,7 +117,7 @@ class ResidentManager:
             raise DatabaseError("Failed to search residents", original_error=e)
     
     def add_resident(self, flat_no, name, resident_type, mobile_no, email, date_joining,
-                     cars, scooters, parking_slot, car_numbers, scooter_numbers, monthly_charges, status, remarks):
+                     cars, scooters, parking_slot, car_numbers, scooter_numbers, monthly_charges, status, remarks, current_user=None):
         try:
             with get_db_connection(self.db_path) as conn:
                 cursor = conn.cursor()
@@ -130,6 +134,35 @@ class ResidentManager:
                 
                 conn.commit()
                 resident_id = cursor.lastrowid
+                
+                # Log the action
+                user_id = get_user_id(current_user) if current_user else None
+                new_values = {
+                    'flat_no': flat_no,
+                    'name': name,
+                    'resident_type': resident_type,
+                    'mobile_no': mobile_no,
+                    'email': email,
+                    'date_joining': date_joining,
+                    'cars': cars,
+                    'scooters': scooters,
+                    'parking_slot': parking_slot,
+                    'car_numbers': car_numbers,
+                    'scooter_numbers': scooter_numbers,
+                    'monthly_charges': fixed_charges,
+                    'status': status,
+                    'remarks': remarks
+                }
+                
+                audit_logger.log_data_change(
+                    user_id=user_id or -1,
+                    username=current_user or "Unknown",
+                    action="CREATE_RESIDENT",
+                    table_name="residents",
+                    record_id=resident_id,
+                    new_values=new_values
+                )
+                
                 return resident_id
         except DatabaseError:
             # Re-raise database errors
@@ -139,8 +172,11 @@ class ResidentManager:
             raise DatabaseError("Failed to add resident", original_error=e)
     
     def update_resident(self, resident_id, flat_no, name, resident_type, mobile_no, email, date_joining,
-                        cars, scooters, parking_slot, car_numbers, scooter_numbers, monthly_charges, status, remarks):
+                        cars, scooters, parking_slot, car_numbers, scooter_numbers, monthly_charges, status, remarks, current_user=None):
         try:
+            # First get the old values for logging
+            old_resident = self.get_resident_by_id(resident_id)
+            
             with get_db_connection(self.db_path) as conn:
                 cursor = conn.cursor()
                 
@@ -155,6 +191,53 @@ class ResidentManager:
                       cars, scooters, parking_slot, car_numbers, scooter_numbers, fixed_charges, status, remarks, resident_id))
                 
                 conn.commit()
+                
+                # Log the action
+                user_id = get_user_id(current_user) if current_user else None
+                old_values = {
+                    'flat_no': old_resident.flat_no,
+                    'name': old_resident.name,
+                    'resident_type': old_resident.resident_type,
+                    'mobile_no': old_resident.mobile_no,
+                    'email': old_resident.email,
+                    'date_joining': old_resident.date_joining,
+                    'cars': old_resident.cars,
+                    'scooters': old_resident.scooters,
+                    'parking_slot': old_resident.parking_slot,
+                    'car_numbers': old_resident.car_numbers,
+                    'scooter_numbers': old_resident.scooter_numbers,
+                    'monthly_charges': old_resident.monthly_charges,
+                    'status': old_resident.status,
+                    'remarks': old_resident.remarks
+                } if old_resident else None
+                
+                new_values = {
+                    'flat_no': flat_no,
+                    'name': name,
+                    'resident_type': resident_type,
+                    'mobile_no': mobile_no,
+                    'email': email,
+                    'date_joining': date_joining,
+                    'cars': cars,
+                    'scooters': scooters,
+                    'parking_slot': parking_slot,
+                    'car_numbers': car_numbers,
+                    'scooter_numbers': scooter_numbers,
+                    'monthly_charges': fixed_charges,
+                    'status': status,
+                    'remarks': remarks
+                }
+                
+                audit_logger.log_data_change(
+                    user_id=user_id or -1,
+                    username=current_user or "Unknown",
+                    action="UPDATE_RESIDENT",
+                    table_name="residents",
+                    record_id=resident_id,
+                    old_values=old_values,
+                    new_values=new_values
+                )
+                
                 return True
         except DatabaseError:
             # Re-raise database errors
@@ -163,14 +246,46 @@ class ResidentManager:
             # Wrap unexpected errors in DatabaseError
             raise DatabaseError("Failed to update resident", original_error=e)
     
-    def delete_resident(self, resident_id):
+    def delete_resident(self, resident_id, current_user=None):
         try:
+            # First get the resident details for logging
+            resident = self.get_resident_by_id(resident_id)
+            
             with get_db_connection(self.db_path) as conn:
                 cursor = conn.cursor()
                 
                 cursor.execute('DELETE FROM residents WHERE id=?', (resident_id,))
                 
                 conn.commit()
+                
+                # Log the action
+                user_id = get_user_id(current_user) if current_user else None
+                old_values = {
+                    'flat_no': resident.flat_no,
+                    'name': resident.name,
+                    'resident_type': resident.resident_type,
+                    'mobile_no': resident.mobile_no,
+                    'email': resident.email,
+                    'date_joining': resident.date_joining,
+                    'cars': resident.cars,
+                    'scooters': resident.scooters,
+                    'parking_slot': resident.parking_slot,
+                    'car_numbers': resident.car_numbers,
+                    'scooter_numbers': resident.scooter_numbers,
+                    'monthly_charges': resident.monthly_charges,
+                    'status': resident.status,
+                    'remarks': resident.remarks
+                } if resident else None
+                
+                audit_logger.log_data_change(
+                    user_id=user_id or -1,
+                    username=current_user or "Unknown",
+                    action="DELETE_RESIDENT",
+                    table_name="residents",
+                    record_id=resident_id,
+                    old_values=old_values
+                )
+                
                 return True
         except DatabaseError:
             # Re-raise database errors

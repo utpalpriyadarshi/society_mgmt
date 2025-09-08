@@ -32,7 +32,7 @@ class MainWindow(QMainWindow):
         
         # Add modules based on user role
         if self.user_role in ["Admin", "Treasurer", "System Admin"]:
-            self.resident_form = ResidentForm(user_role=self.user_role)
+            self.resident_form = ResidentForm(user_role=self.user_role, current_user=self.username)
             self.tabs.addTab(self.resident_form, "Resident Management")
             
             self.ledger_form = LedgerForm(current_user=self.username)
@@ -93,6 +93,11 @@ class MainWindow(QMainWindow):
             society_setup_action = QAction("Society Setup", self)
             society_setup_action.triggered.connect(self.open_society_setup)
             tools_menu.addAction(society_setup_action)
+            
+            # Add Audit Log Viewer
+            audit_log_action = QAction("Audit Log Viewer", self)
+            audit_log_action.triggered.connect(self.open_audit_log_viewer)
+            tools_menu.addAction(audit_log_action)
     
     def create_status_bar(self):
         # Create a custom status bar with user info and logout button
@@ -407,6 +412,11 @@ class MainWindow(QMainWindow):
     def open_society_setup(self):
         society_setup_dialog = SocietySetupDialog(self, user_role=self.user_role)
         society_setup_dialog.exec_()
+    
+    def open_audit_log_viewer(self):
+        from gui.audit_log_viewer import AuditLogViewer
+        audit_log_viewer = AuditLogViewer(self)
+        audit_log_viewer.exec_()
     
     def logout(self):
         self.controller.logout()

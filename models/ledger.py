@@ -1,6 +1,11 @@
 # models/ledger.py
 import sqlite3
 from datetime import datetime
+from utils.db_context import get_db_connection
+from utils.database_exceptions import DatabaseError
+from utils.audit_logger import audit_logger
+from utils.security import get_user_id
+
 
 class LedgerTransaction:
     def __init__(self, id, transaction_id, date, flat_no, transaction_type, category, 
@@ -42,32 +47,55 @@ class LedgerManager:
         Add a new transaction to the ledger following proper accounting procedures
         Returns the transaction ID if successful, None otherwise
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
         try:
-            # Generate transaction ID
-            transaction_id = self.generate_transaction_id()
-            
-            # Calculate running balance
-            cursor.execute('SELECT balance FROM ledger ORDER BY id DESC LIMIT 1')
-            last_balance_row = cursor.fetchone()
-            last_balance = last_balance_row[0] if last_balance_row else 0.0
-            
-            new_balance = last_balance + credit - debit
-            
-            cursor.execute('''
-                INSERT INTO ledger (transaction_id, date, flat_no, transaction_type, category, description,
-                                   debit, credit, balance, payment_mode, entered_by)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (transaction_id, date, flat_no, transaction_type, category, description,
-                  debit, credit, new_balance, payment_mode, entered_by))
-            
-            conn.commit()
-            conn.close()
-            return transaction_id
+            with get_db_connection(self.db_path) as conn:
+                cursor = conn.cursor()
+                
+                # Generate transaction ID
+                transaction_id = self.generate_transaction_id()
+                
+                # Calculate running balance
+                cursor.execute('SELECT balance FROM ledger ORDER BY id DESC LIMIT 1')
+                last_balance_row = cursor.fetchone()
+                last_balance = last_balance_row[0] if last_balance_row else 0.0
+                
+                new_balance = last_balance + credit - debit
+                
+                cursor.execute('''
+                    INSERT INTO ledger (transaction_id, date, flat_no, transaction_type, category, description,
+                                       debit, credit, balance, payment_mode, entered_by)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (transaction_id, date, flat_no, transaction_type, category, description,
+                      debit, credit, new_balance, payment_mode, entered_by))
+                
+                conn.commit()
+                
+                # Log the action
+                user_id = get_user_id(entered_by) if entered_by else None
+                new_values = {
+                    'date': date,
+                    'flat_no': flat_no,
+                    'transaction_type': transaction_type,
+                    'category': category,
+                    'description': description,
+                    'debit': debit,
+                    'credit': credit,
+                    'payment_mode': payment_mode,
+                    'entered_by': entered_by,
+                    'balance': new_balance
+                }
+                
+                audit_logger.log_data_change(
+                    user_id=user_id or -1,
+                    username=entered_by or "Unknown",
+                    action=f"CREATE_{transaction_type.upper()}",
+                    table_name="ledger",
+                    record_id=None,  # We don't have the database ID here
+                    new_values=new_values
+                )
+                
+                return transaction_id
         except Exception as e:
-            conn.close()
             print(f"Error adding transaction: {e}")
             return None
     
@@ -169,41 +197,72 @@ class LedgerManager:
         """Get predefined payment modes"""
         return ["Cash", "Bank Transfer", "Cheque", "Online Payment", "Other"]
     
-    def delete_transaction(self, transaction_id):
+    def delete_transaction(self, transaction_id, current_user=None):
         """
         Delete a transaction by transaction ID (for draft/unposted entries only)
         NOTE: This should only be used for draft entries that haven't been finalized.
         For posted transactions, use reverse_transaction instead.
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        # Check if transaction exists
-        cursor.execute('SELECT COUNT(*) FROM ledger WHERE transaction_id = ?', (transaction_id,))
-        count = cursor.fetchone()[0]
-        
-        if count == 0:
-            conn.close()
-            raise ValueError("Transaction not found")
-        
-        # Check if transaction has been reversed
-        cursor.execute('SELECT COUNT(*) FROM transaction_reversals WHERE original_transaction_id = ?', (transaction_id,))
-        reversed_count = cursor.fetchone()[0]
-        
-        if reversed_count > 0:
-            conn.close()
-            raise ValueError("Cannot delete a transaction that has been reversed")
-        
-        # Log the deletion in a separate audit table (to be implemented)
-        # For now, we'll just delete the transaction
-        cursor.execute('DELETE FROM ledger WHERE transaction_id = ?', (transaction_id,))
-        
-        # Recalculate balances after deletion
-        self.recalculate_balances()
-        
-        conn.commit()
-        conn.close()
-        return True
+        try:
+            with get_db_connection(self.db_path) as conn:
+                cursor = conn.cursor()
+                
+                # Get transaction details for logging
+                cursor.execute('''
+                    SELECT transaction_id, date, flat_no, transaction_type, category, description,
+                           debit, credit, balance, payment_mode, entered_by
+                    FROM ledger WHERE transaction_id = ?
+                ''', (transaction_id,))
+                transaction_row = cursor.fetchone()
+                
+                if not transaction_row:
+                    raise ValueError("Transaction not found")
+                
+                # Extract transaction details for logging
+                old_values = {
+                    'transaction_id': transaction_row[0],
+                    'date': transaction_row[1],
+                    'flat_no': transaction_row[2],
+                    'transaction_type': transaction_row[3],
+                    'category': transaction_row[4],
+                    'description': transaction_row[5],
+                    'debit': transaction_row[6],
+                    'credit': transaction_row[7],
+                    'balance': transaction_row[8],
+                    'payment_mode': transaction_row[9],
+                    'entered_by': transaction_row[10]
+                }
+                
+                # Check if transaction has been reversed
+                cursor.execute('SELECT COUNT(*) FROM transaction_reversals WHERE original_transaction_id = ?', (transaction_id,))
+                reversed_count = cursor.fetchone()[0]
+                
+                if reversed_count > 0:
+                    raise ValueError("Cannot delete a transaction that has been reversed")
+                
+                # Log the deletion
+                user_id = get_user_id(current_user) if current_user else None
+                audit_logger.log_data_change(
+                    user_id=user_id or -1,
+                    username=current_user or "Unknown",
+                    action=f"DELETE_{transaction_row[3].upper()}",  # transaction_type
+                    table_name="ledger",
+                    record_id=None,
+                    old_values=old_values
+                )
+                
+                # Delete the transaction
+                cursor.execute('DELETE FROM ledger WHERE transaction_id = ?', (transaction_id,))
+                
+                # Recalculate balances after deletion
+                self.recalculate_balances()
+                
+                conn.commit()
+                return True
+                
+        except Exception as e:
+            print(f"Error deleting transaction: {e}")
+            raise
     
     def recalculate_balances(self):
         """Recalculate all balances after a deletion"""

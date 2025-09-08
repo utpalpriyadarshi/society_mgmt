@@ -10,10 +10,11 @@ from PyQt5.QtGui import QIntValidator
 from models.resident import ResidentManager
 
 class ResidentForm(QWidget):
-    def __init__(self, parent=None, user_role=None):
+    def __init__(self, parent=None, user_role=None, current_user=None):
         super().__init__(parent)
         self.resident_manager = ResidentManager()
         self.user_role = user_role  # Store user role to check permissions
+        self.current_user = current_user  # Store current user for audit logging
         self.current_resident_id = None
         self.setup_ui()
         self.load_residents()
@@ -139,7 +140,8 @@ class ResidentForm(QWidget):
                     data['mobile_no'], data['email'], data['date_joining'],
                     data['cars'], data['scooters'], data['parking_slot'],
                     data['car_numbers'], data['scooter_numbers'],
-                    data['monthly_charges'], data['status'], data['remarks']
+                    data['monthly_charges'], data['status'], data['remarks'],
+                    self.current_user  # Pass current user for audit logging
                 )
                 
                 if resident_id:
@@ -176,7 +178,8 @@ class ResidentForm(QWidget):
                     data['mobile_no'], data['email'], data['date_joining'],
                     data['cars'], data['scooters'], data['parking_slot'],
                     data['car_numbers'], data['scooter_numbers'],
-                    data['monthly_charges'], data['status'], data['remarks']
+                    data['monthly_charges'], data['status'], data['remarks'],
+                    self.current_user  # Pass current user for audit logging
                 )
                 
                 if success:
@@ -205,7 +208,7 @@ class ResidentForm(QWidget):
         
         if reply == QMessageBox.Yes:
             try:
-                self.resident_manager.delete_resident(resident_id)
+                self.resident_manager.delete_resident(resident_id, self.current_user)  # Pass current user for audit logging
                 QMessageBox.information(self, "Success", "Resident deleted successfully!")
                 self.load_residents()
             except Exception as e:

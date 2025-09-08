@@ -8,6 +8,9 @@ import secrets
 import sqlite3
 from datetime import datetime, timedelta
 from utils.db_context import get_db_connection
+from utils.audit_logger import audit_logger
+from utils.security import get_user_id
+
 
 class SessionManager:
     def __init__(self, db_path="society_management.db"):
@@ -48,6 +51,17 @@ class SessionManager:
             
             conn.commit()
             
+            # Log session creation
+            user_id = get_user_id(username)
+            if user_id:
+                audit_logger.log_action(
+                    user_id=user_id,
+                    username=username,
+                    action="SESSION_CREATED",
+                    details="User session created",
+                    session_id=session_id
+                )
+            
         return session_id
     
     def validate_session(self, session_id):
@@ -72,6 +86,9 @@ class SessionManager:
     
     def destroy_session(self, session_id):
         """Destroy a session (logout)"""
+        # First get the username associated with the session for logging
+        username = self.validate_session(session_id)
+        
         with get_db_connection(self.db_path) as conn:
             cursor = conn.cursor()
             
@@ -80,6 +97,18 @@ class SessionManager:
             ''', (session_id,))
             
             conn.commit()
+            
+            # Log session destruction
+            if username:
+                user_id = get_user_id(username)
+                if user_id:
+                    audit_logger.log_action(
+                        user_id=user_id,
+                        username=username,
+                        action="SESSION_DESTROYED",
+                        details="User session destroyed (logout)",
+                        session_id=session_id
+                    )
 
 # Global session manager instance
 session_manager = SessionManager()
