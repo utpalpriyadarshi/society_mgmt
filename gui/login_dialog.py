@@ -2,11 +2,12 @@ from PyQt5.QtWidgets import (QDialog, QLabel, QLineEdit,
                              QPushButton, QVBoxLayout, QHBoxLayout,
                              QMessageBox, QFrame, QApplication, QCheckBox)
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QPixmap
 from utils.security import authenticate_user
 from utils.session_manager import session_manager
 from utils.db_context import get_db_connection
 from datetime import datetime
+import os
 
 
 class LoginDialog(QDialog):
@@ -14,53 +15,70 @@ class LoginDialog(QDialog):
         super().__init__(parent)
         self.is_dark_mode = False  # Default to light mode
         self.setWindowTitle("Login - Society Management System v1.1")
-        self.setFixedSize(600, 600)  # Set size to 600x600 as requested
-        self.setWindowFlags(Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint)
+        self.resize(1000, 600)  # Initial size
+        self.setMinimumSize(800, 500)  # Minimum size
+        self.setWindowFlags(Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
         self.setup_ui()
         self.apply_theme()
         
     def setup_ui(self):
-        # Main layout
-        main_layout = QVBoxLayout()
-        main_layout.setSpacing(20)
-        main_layout.setContentsMargins(50, 30, 50, 30)
+        # Main horizontal layout
+        main_layout = QHBoxLayout()
+        main_layout.setSpacing(0)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Left section - Login form
+        self.left_section = QFrame()
+        left_layout = QVBoxLayout()
+        left_layout.setSpacing(20)
+        left_layout.setContentsMargins(50, 30, 50, 30)
+        
+        # Logo
+        logo_label = QLabel()
+        logo_path = os.path.join("assets", "nextgenlogo.png").replace("\\", "/")
+        logo_pixmap = QPixmap(logo_path)
+        if not logo_pixmap.isNull():
+            # Scale the logo to a reasonable size
+            logo_pixmap = logo_pixmap.scaled(80, 80, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            logo_label.setPixmap(logo_pixmap)
+            logo_label.setAlignment(Qt.AlignCenter)
+        else:
+            # Fallback if logo not found
+            logo_label.setText("LOGO")
+            logo_label.setAlignment(Qt.AlignCenter)
+            logo_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #3498db;")
         
         # Title
         title_label = QLabel("Society Management System")
         title_font = QFont()
-        title_font.setPointSize(16)  # Reduced from 18 to 16
+        title_font.setPointSize(18)
         title_font.setBold(True)
         title_label.setFont(title_font)
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("color: #2c3e50; margin-bottom: 5px;")
-        main_layout.addWidget(title_label)
         
         # Subtitle
         subtitle_label = QLabel("Please sign in to your account")
         subtitle_label.setAlignment(Qt.AlignCenter)
-        subtitle_label.setStyleSheet("color: #7f8c8d; font-size: 16px; margin-bottom: 20px")
-        main_layout.addWidget(subtitle_label)
-        
-        # Create a frame for the form
-        form_frame = QFrame()
-        form_frame.setStyleSheet("background-color: #f8f9fa; border-radius: 10px;")
-        form_frame.setContentsMargins(20, 20, 20, 20)
+        subtitle_label.setStyleSheet("color: #7f8c8d; font-size: 14px; margin-bottom: 20px")
         
         # Form layout
         form_layout = QVBoxLayout()
         form_layout.setSpacing(15)
-        form_layout.setContentsMargins(30, 30, 30, 30)
+        form_layout.setContentsMargins(0, 20, 0, 20)
         
         # Username field
         self.username_input = QLineEdit()
         self.username_input.setPlaceholderText("Enter your username")
         self.username_input.setStyleSheet("""
+
             QLineEdit {
                 padding: 12px;
                 border: 2px solid #ddd;
                 border-radius: 6px;
                 font-size: 14px;
                 background-color: white;
+                min-height: 20px;
             }
             QLineEdit:focus {
                 border-color: #3498db;
@@ -79,12 +97,14 @@ class LoginDialog(QDialog):
         self.password_input.setPlaceholderText("Enter your password")
         self.password_input.setEchoMode(QLineEdit.Password)
         self.password_input.setStyleSheet("""
+
             QLineEdit {
                 padding: 12px;
                 border: 2px solid #ddd;
                 border-radius: 6px;
                 font-size: 14px;
                 background-color: white;
+                min-height: 20px;
             }
             QLineEdit:focus {
                 border-color: #3498db;
@@ -98,6 +118,7 @@ class LoginDialog(QDialog):
         self.toggle_password_button = QPushButton("👁")
         self.toggle_password_button.setFixedSize(30, 30)
         self.toggle_password_button.setStyleSheet("""
+
             QPushButton {
                 background-color: #3498db;
                 color: white;
@@ -120,9 +141,10 @@ class LoginDialog(QDialog):
         # Remember me checkbox
         self.remember_me_checkbox = QCheckBox("Remember me")
         self.remember_me_checkbox.setStyleSheet("""
+
             QCheckBox {
                 color: #2c3e50;
-                font-size: 12px;
+                font-size: 14px;
             }
             QCheckBox::indicator {
                 width: 16px;
@@ -143,14 +165,16 @@ class LoginDialog(QDialog):
         # Forgot password link
         self.forgot_password_link = QPushButton("Forgot Password?")
         self.forgot_password_link.setStyleSheet("""
+
             QPushButton {
                 color: #3498db;
                 background-color: transparent;
                 border: none;
-                font-size: 12px;
+                font-size: 14px;
                 text-align: left;
                 padding: 0px;
                 margin: 0px;
+                margin-top: 10px;
             }
             QPushButton:hover {
                 text-decoration: underline;
@@ -168,6 +192,7 @@ class LoginDialog(QDialog):
         # Login button
         self.login_button = QPushButton("Sign In")
         self.login_button.setStyleSheet("""
+
             QPushButton {
                 background-color: #3498db;
                 color: white;
@@ -193,6 +218,7 @@ class LoginDialog(QDialog):
         self.theme_button = QPushButton("🌙")
         self.theme_button.setFixedSize(30, 30)
         self.theme_button.setStyleSheet("""
+
             QPushButton {
                 background-color: #3498db;
                 color: white;
@@ -216,17 +242,65 @@ class LoginDialog(QDialog):
         button_layout.addStretch()  # Add stretch to push the theme button to the right
         button_layout.addWidget(self.theme_button)
         
-        form_layout.addLayout(button_layout)
+        # Add all elements to left layout
+        left_layout.addWidget(logo_label)
+        left_layout.addWidget(title_label)
+        left_layout.addWidget(subtitle_label)
+        left_layout.addLayout(form_layout)
+        left_layout.addLayout(button_layout)
         
-        # Set layout for frame
-        form_frame.setLayout(form_layout)
-        main_layout.addWidget(form_frame)
+        # Spacer to push content to the top
+        left_layout.addStretch()
         
-        # Footer
-        footer_label = QLabel("© 2025 Society Management System by NextGen Advisors")
-        footer_label.setAlignment(Qt.AlignCenter)
-        footer_label.setStyleSheet("color: #95a5a6; font-size: 6px; margin-top: 20px;")
-        main_layout.addWidget(footer_label)
+        self.left_section.setLayout(left_layout)
+        
+        # Right section - Image
+        self.right_section = QFrame()
+        self.right_section.setObjectName("imageSection")
+        
+        # Create a layout for the right section
+        right_layout = QVBoxLayout()
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(0)
+        
+        # Set the background image using QLabel and QPixmap
+        image_path = os.path.join("assets", "SocietyImage1.jpg").replace("\\", "/")
+        if os.path.exists(image_path):
+            image_label = QLabel()
+            pixmap = QPixmap(image_path)
+            if not pixmap.isNull():
+                # Scale the pixmap to fit the section while maintaining aspect ratio
+                image_label.setPixmap(pixmap)
+                image_label.setAlignment(Qt.AlignCenter)
+                image_label.setStyleSheet("background-color: #3498db;")
+                image_label.setScaledContents(True)
+                right_layout.addWidget(image_label)
+            else:
+                # Fallback if image cannot be loaded
+                fallback_label = QLabel()
+                fallback_label.setStyleSheet("""
+
+                    background-color: #3498db;
+                    border-top-right-radius: 10px;
+                    border-bottom-right-radius: 10px;
+                """)
+                right_layout.addWidget(fallback_label)
+        else:
+            # Fallback if image file not found
+            fallback_label = QLabel()
+            fallback_label.setStyleSheet("""
+
+                background-color: #3498db;
+                border-top-right-radius: 10px;
+                border-bottom-right-radius: 10px;
+            """)
+            right_layout.addWidget(fallback_label)
+        
+        self.right_section.setLayout(right_layout)
+        
+        # Add sections to main layout
+        main_layout.addWidget(self.left_section, 1)  # Left section takes 1 part
+        main_layout.addWidget(self.right_section, 1)  # Right section takes 1 part
         
         # Set main layout
         self.setLayout(main_layout)
@@ -258,13 +332,26 @@ class LoginDialog(QDialog):
                 QDialog {
                     background-color: #2c3e50;
                 }
-                QLabel {
-                    color: #ecf0f1;
-                }
+            """)
+            
+            # Update left section
+            self.left_section.setStyleSheet("""
                 QFrame {
                     background-color: #34495e;
-                    border-radius: 10px;
                 }
+            """)
+            
+            # Update title labels
+            for child in self.findChildren(QLabel):
+                if child.text() == "Society Management System":
+                    child.setStyleSheet("color: #ecf0f1; font-size: 18px; font-weight: bold; margin-bottom: 5px;")
+                elif child.text() == "Please sign in to your account":
+                    child.setStyleSheet("color: #bdc3c7; font-size: 14px; margin-bottom: 20px;")
+                elif "Forgot Password" in child.text():
+                    child.setStyleSheet("color: #3498db; background-color: transparent; border: none; font-size: 12px; text-align: left; padding: 0px; margin: 10px 0px 0px 0px;")
+            
+            # Update input fields
+            self.username_input.setStyleSheet("""
                 QLineEdit {
                     padding: 12px;
                     border: 2px solid #7f8c8d;
@@ -272,17 +359,39 @@ class LoginDialog(QDialog):
                     font-size: 14px;
                     background-color: #34495e;
                     color: #ecf0f1;
+                    min-height: 20px;
                 }
                 QLineEdit:focus {
                     border-color: #3498db;
                     outline: none;
                     border-width: 2px;
                 }
+            """)
+            
+            self.password_input.setStyleSheet("""
+                QLineEdit {
+                    padding: 12px;
+                    border: 2px solid #7f8c8d;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    background-color: #34495e;
+                    color: #ecf0f1;
+                    min-height: 20px;
+                }
+                QLineEdit:focus {
+                    border-color: #3498db;
+                    outline: none;
+                    border-width: 2px;
+                }
+            """)
+            
+            # Update buttons
+            self.toggle_password_button.setStyleSheet("""
                 QPushButton {
                     background-color: #3498db;
                     color: white;
                     border: none;
-                    border-radius: 6px;
+                    border-radius: 4px;
                     font-weight: bold;
                 }
                 QPushButton:hover {
@@ -291,9 +400,53 @@ class LoginDialog(QDialog):
                 QPushButton:pressed {
                     background-color: #21618c;
                 }
+            """)
+            
+            self.login_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #3498db;
+                    color: white;
+                    border: none;
+                    padding: 14px;
+                    font-size: 14px;
+                    font-weight: bold;
+                    border-radius: 6px;
+                    margin-top: 10px;
+                }
+                QPushButton:hover {
+                    background-color: #2980b9;
+                }
+                QPushButton:pressed {
+                    background-color: #21618c;
+                }
+            """)
+            
+            self.theme_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #3498db;
+                    color: white;
+                    border: none;
+                    border-radius: 15px;
+                    font-weight: bold;
+                    margin-top: 10px;
+                }
+                QPushButton:hover {
+                    background-color: #2980b9;
+                }
+                QPushButton:pressed {
+                    background-color: #21618c;
+                }
+            """)
+            
+            # Update checkbox
+            self.remember_me_checkbox.setStyleSheet("""
                 QCheckBox {
                     color: #ecf0f1;
                     font-size: 12px;
+                }
+                QCheckBox::indicator {
+                    width: 16px;
+                    height: 16px;
                 }
                 QCheckBox::indicator:unchecked {
                     border: 2px solid #bdc3c7;
@@ -306,27 +459,48 @@ class LoginDialog(QDialog):
                     background-color: #3498db;
                 }
             """)
-            # Update specific labels
-            for child in self.findChildren(QLabel):
-                if "Society Management System" in child.text():
-                    child.setStyleSheet("color: #ecf0f1; margin-bottom: 5px;")
-                elif "Please sign in" in child.text():
-                    child.setStyleSheet("color: #bdc3c7; font-size: 16px; margin-bottom: 20px;")
-                elif "© 2025" in child.text():
-                    child.setStyleSheet("color: #bdc3c7; font-size: 7px; margin-top: 20px;")
+            
+            # Update links
+            self.forgot_password_link.setStyleSheet("""
+                QPushButton {
+                    color: #3498db;
+                    background-color: transparent;
+                    border: none;
+                    font-size: 12px;
+                    text-align: left;
+                    padding: 0px;
+                    margin: 10px 0px 0px 0px;
+                }
+                QPushButton:hover {
+                    text-decoration: underline;
+                }
+            """)
         else:
             # Light mode stylesheet (default)
             self.setStyleSheet("""
                 QDialog {
                     background-color: white;
                 }
-                QLabel {
-                    color: #2c3e50;
-                }
+            """)
+            
+            # Update left section
+            self.left_section.setStyleSheet("""
                 QFrame {
-                    background-color: #f8f9fa;
-                    border-radius: 10px;
+                    background-color: white;
                 }
+            """)
+            
+            # Update title labels
+            for child in self.findChildren(QLabel):
+                if child.text() == "Society Management System":
+                    child.setStyleSheet("color: #2c3e50; font-size: 18px; font-weight: bold; margin-bottom: 5px;")
+                elif child.text() == "Please sign in to your account":
+                    child.setStyleSheet("color: #7f8c8d; font-size: 14px; margin-bottom: 20px;")
+                elif "Forgot Password" in child.text():
+                    child.setStyleSheet("color: #3498db; background-color: transparent; border: none; font-size: 12px; text-align: left; padding: 0px; margin: 10px 0px 0px 0px;")
+            
+            # Update input fields
+            self.username_input.setStyleSheet("""
                 QLineEdit {
                     padding: 12px;
                     border: 2px solid #ddd;
@@ -334,17 +508,39 @@ class LoginDialog(QDialog):
                     font-size: 14px;
                     background-color: white;
                     color: #2c3e50;
+                    min-height: 20px;
                 }
                 QLineEdit:focus {
                     border-color: #3498db;
                     outline: none;
                     border-width: 2px;
                 }
+            """)
+            
+            self.password_input.setStyleSheet("""
+                QLineEdit {
+                    padding: 12px;
+                    border: 2px solid #ddd;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    background-color: white;
+                    color: #2c3e50;
+                    min-height: 20px;
+                }
+                QLineEdit:focus {
+                    border-color: #3498db;
+                    outline: none;
+                    border-width: 2px;
+                }
+            """)
+            
+            # Update buttons
+            self.toggle_password_button.setStyleSheet("""
                 QPushButton {
                     background-color: #3498db;
                     color: white;
                     border: none;
-                    border-radius: 6px;
+                    border-radius: 4px;
                     font-weight: bold;
                 }
                 QPushButton:hover {
@@ -353,9 +549,53 @@ class LoginDialog(QDialog):
                 QPushButton:pressed {
                     background-color: #21618c;
                 }
+            """)
+            
+            self.login_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #3498db;
+                    color: white;
+                    border: none;
+                    padding: 14px;
+                    font-size: 14px;
+                    font-weight: bold;
+                    border-radius: 6px;
+                    margin-top: 10px;
+                }
+                QPushButton:hover {
+                    background-color: #2980b9;
+                }
+                QPushButton:pressed {
+                    background-color: #21618c;
+                }
+            """)
+            
+            self.theme_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #3498db;
+                    color: white;
+                    border: none;
+                    border-radius: 15px;
+                    font-weight: bold;
+                    margin-top: 10px;
+                }
+                QPushButton:hover {
+                    background-color: #2980b9;
+                }
+                QPushButton:pressed {
+                    background-color: #21618c;
+                }
+            """)
+            
+            # Update checkbox
+            self.remember_me_checkbox.setStyleSheet("""
                 QCheckBox {
                     color: #2c3e50;
                     font-size: 12px;
+                }
+                QCheckBox::indicator {
+                    width: 16px;
+                    height: 16px;
                 }
                 QCheckBox::indicator:unchecked {
                     border: 2px solid #bdc3c7;
@@ -368,14 +608,22 @@ class LoginDialog(QDialog):
                     background-color: #3498db;
                 }
             """)
-            # Update specific labels
-            for child in self.findChildren(QLabel):
-                if "Society Management System" in child.text():
-                    child.setStyleSheet("color: #2c3e50; margin-bottom: 5px;")
-                elif "Please sign in" in child.text():
-                    child.setStyleSheet("color: #7f8c8d; font-size: 16px; margin-bottom: 20px;")
-                elif "© 2025" in child.text():
-                    child.setStyleSheet("color: #95a5a6; font-size: 7px; margin-top: 20px;")
+            
+            # Update links
+            self.forgot_password_link.setStyleSheet("""
+                QPushButton {
+                    color: #3498db;
+                    background-color: transparent;
+                    border: none;
+                    font-size: 12px;
+                    text-align: left;
+                    padding: 0px;
+                    margin: 10px 0px 0px 0px;
+                }
+                QPushButton:hover {
+                    text-decoration: underline;
+                }
+            """)
     
     def authenticate(self):
         username = self.username_input.text().strip()
@@ -574,7 +822,7 @@ class ForgotPasswordDialog(QDialog):
         QMessageBox.information(
             self, 
             "Reset Password", 
-            "In a production environment, this system would send you instructions to reset your password.\n\n"
+            "In a production environment, this system would send you instructions to reset your password.\\n\\n"
             "Since this is a demo application without email functionality, please contact your system administrator to reset your password."
         )
         self.accept()

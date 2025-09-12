@@ -264,6 +264,7 @@ This script will:
 - Implemented login security with account lockout after multiple failed attempts
 - Added login security reset functionality
 - Added dark mode toggle for improved user experience in different lighting conditions
+- **Modernized login page with two-section design (form on left, image on right)** - See [LOGIN_PAGE_IMPROVEMENTS.md](LOGIN_PAGE_IMPROVEMENTS.md) for details
 - **Added bank reconciliation feature with CSV and PDF import support**
 - **Enhanced resident management with car and scooter number tracking**
 - **Implemented comprehensive transaction reversal system**
