@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import (QDialog, QLabel, QLineEdit, 
+from PyQt5.QtWidgets import (QDialog, QLabel, QLineEdit,
                              QPushButton, QVBoxLayout, QHBoxLayout,
                              QMessageBox, QFrame, QApplication, QCheckBox)
 from PyQt5.QtCore import Qt
@@ -6,6 +6,7 @@ from PyQt5.QtGui import QFont, QPixmap
 from utils.security import authenticate_user
 from utils.session_manager import session_manager
 from utils.db_context import get_db_connection
+from utils.config import load_config, save_config
 from datetime import datetime
 import os
 
@@ -20,6 +21,7 @@ class LoginDialog(QDialog):
         self.setWindowFlags(Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
         self.setup_ui()
         self.apply_theme()
+        self.load_user_preferences()
         
     def setup_ui(self):
         # Main horizontal layout
@@ -35,7 +37,7 @@ class LoginDialog(QDialog):
         
         # Logo
         logo_label = QLabel()
-        logo_path = os.path.join("assets", "nextgenlogo.png").replace("\\", "/")
+        logo_path = os.path.join("assets", "nextgenlogo.png")
         logo_pixmap = QPixmap(logo_path)
         if not logo_pixmap.isNull():
             # Scale the logo to a reasonable size
@@ -264,7 +266,7 @@ class LoginDialog(QDialog):
         right_layout.setSpacing(0)
         
         # Set the background image using QLabel and QPixmap
-        image_path = os.path.join("assets", "SocietyImage1.jpg").replace("\\", "/")
+        image_path = os.path.join("assets", "SocietyImage1.jpg")
         if os.path.exists(image_path):
             image_label = QLabel()
             pixmap = QPixmap(image_path)
@@ -650,8 +652,16 @@ class LoginDialog(QDialog):
         user_role = authenticate_user(username, password, ip_address, session_id)
         
         if user_role:
+            config = load_config()
+            if self.remember_me_checkbox.isChecked():
+                config['remember_me'] = True
+                config['username'] = username
+            else:
+                config['remember_me'] = False
+                config.pop('username', None)
+            save_config(config)
             # In a real application, you would store the session_id securely
-            # For this example, we'll just print it
+            # For this example, we'll  just print it
             print(f"Session created for {username}: {session_id}")
             self.accept()
         else:
@@ -676,6 +686,18 @@ class LoginDialog(QDialog):
             
             self.password_input.clear()
             self.password_input.setFocus()
+
+    def load_user_preferences(self):
+        config = load_config()
+        if config.get('remember_me'):
+            self.username_input.setText(config.get('username', ''))
+            self.remember_me_checkbox.setChecked(True)
+
+    def load_user_preferences(self):
+        config = load_config()
+        if config.get('remember_me'):
+            self.username_input.setText(config.get('username', ''))
+            self.remember_me_checkbox.setChecked(True)
 
     def show_forgot_password_dialog(self):
         """Show the forgot password dialog"""
@@ -822,7 +844,7 @@ class ForgotPasswordDialog(QDialog):
         QMessageBox.information(
             self, 
             "Reset Password", 
-            "In a production environment, this system would send you instructions to reset your password.\\n\\n"
+            "In a production environment, this system would send you instructions to reset your password.\n\n" 
             "Since this is a demo application without email functionality, please contact your system administrator to reset your password."
         )
         self.accept()
