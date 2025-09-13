@@ -61,12 +61,16 @@ class LedgerManager:
                 
                 new_balance = last_balance + credit - debit
                 
+                # Use local time instead of database default timestamp to match audit log format
+                from datetime import datetime
+                local_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                
                 cursor.execute('''
                     INSERT INTO ledger (transaction_id, date, flat_no, transaction_type, category, description,
-                                       debit, credit, balance, payment_mode, entered_by)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                       debit, credit, balance, payment_mode, entered_by, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (transaction_id, date, flat_no, transaction_type, category, description,
-                      debit, credit, new_balance, payment_mode, entered_by))
+                      debit, credit, new_balance, payment_mode, entered_by, local_timestamp))
                 
                 conn.commit()
                 
@@ -266,19 +270,25 @@ class LedgerManager:
     
     def recalculate_balances(self):
         """Recalculate all balances after a deletion"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('SELECT id, debit, credit FROM ledger ORDER BY date ASC, id ASC')
-        transactions = cursor.fetchall()
-        
-        balance = 0.0
-        for txn_id, debit, credit in transactions:
-            balance = balance + credit - debit
-            cursor.execute('UPDATE ledger SET balance = ? WHERE id = ?', (balance, txn_id))
-        
-        conn.commit()
-        conn.close()
+        try:
+            with get_db_connection(self.db_path) as conn:
+                cursor = conn.cursor()
+                
+                cursor.execute('SELECT id, debit, credit FROM ledger ORDER BY date ASC, id ASC')
+                transactions = cursor.fetchall()
+                
+                balance = 0.0
+                for txn_id, debit, credit in transactions:
+                    balance = balance + credit - debit
+                    cursor.execute('UPDATE ledger SET balance = ? WHERE id = ?', (balance, txn_id))
+                
+                conn.commit()
+        except DatabaseError:
+            # Re-raise database errors
+            raise
+        except Exception as e:
+            # Wrap unexpected errors in DatabaseError
+            raise DatabaseError("Failed to recalculate balances", original_error=e)
     
     def can_reverse_transaction(self, transaction_id):
         """

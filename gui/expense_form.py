@@ -45,7 +45,7 @@ class ExpenseForm(QWidget):
             txn_id = self.ledger_manager.add_transaction(
                 data['date'], data['flat_no'], 'Expense', data['category'],
                 data['description'], data['amount'], 0.0, data['payment_mode'],
-                data['reference_no'], data['entered_by']
+                data['entered_by']
             )
             
             if txn_id:
