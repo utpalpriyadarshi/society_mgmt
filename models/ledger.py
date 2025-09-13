@@ -290,6 +290,25 @@ class LedgerManager:
             # Wrap unexpected errors in DatabaseError
             raise DatabaseError("Failed to recalculate balances", original_error=e)
     
+    def get_database_id_by_transaction_id(self, transaction_id):
+        """Get the database ID for a transaction by its transaction_id"""
+        try:
+            with get_db_connection(self.db_path) as conn:
+                cursor = conn.cursor()
+                
+                cursor.execute('SELECT id FROM ledger WHERE transaction_id = ?', (transaction_id,))
+                row = cursor.fetchone()
+                
+                if row:
+                    return row[0]
+                return None
+        except DatabaseError:
+            # Re-raise database errors
+            raise
+        except Exception as e:
+            # Wrap unexpected errors in DatabaseError
+            raise DatabaseError("Failed to retrieve database ID", original_error=e)
+    
     def can_reverse_transaction(self, transaction_id):
         """
         Check if a transaction can be reversed
