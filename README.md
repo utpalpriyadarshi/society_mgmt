@@ -14,6 +14,7 @@ A desktop application for managing residential society operations built with Pyt
 - **Society Configuration**: Set up and manage basic society information.
 - **Database Backup**: Create backups of the entire database for safekeeping.
 - **Dark Mode**: Toggle between light and dark themes for comfortable viewing in different lighting conditions.
+- **Enhanced Ledger System**: Improved ledger tables with standardized structure, user-friendly identifiers, comprehensive data validation, and automatic resident sorting with refresh functionality.
 
 ## Technology Stack
 
@@ -109,6 +110,7 @@ The application now includes a comprehensive bank reconciliation feature that al
 - **Manual Reconciliation**: Select and match transactions manually with confirmation dialogs
 - **Duplicate Prevention**: Prevents importing the same bank statement entries multiple times
 - **Audit Trail**: Tracks all reconciliation activities with timestamps and user information
+- **Standardized UI**: Consistent table structure with Serial Numbers and user-friendly identifiers
 
 ### How to Use Bank Reconciliation
 
@@ -194,9 +196,39 @@ The transaction reversal system is designed to comply with Generally Accepted Ac
 
 For detailed technical information about the implementation, see [TRANSACTION_REVERSAL_PROCEDURE.md](TRANSACTION_REVERSAL_PROCEDURE.md).
 
-## Reports
+## Ledger Improvements
 
-The application generates various PDF reports:
+The application's ledger system has been enhanced with several improvements:
+
+### Key Improvements
+
+- **Standardized Table Structure**: All ledger tables now have a consistent structure with Serial Number (S.N) as the first column for easy reference
+- **User-Friendly Identifiers**: Transaction IDs and Reference Numbers are displayed instead of database IDs for better user experience
+- **Enhanced Data Validation**: Comprehensive validation for all data entry forms with visual feedback for errors
+- **Accurate Calculations**: Fixed ledger balance calculations to ensure accurate financial tracking
+- **Improved Reconciliation**: Bank reconciliation interface with consistent column structure and better user experience
+- **Automatic Resident Sorting**: Resident lists in ledger forms are automatically sorted by flat number in ascending alphanumeric order
+- **Refresh Functionality**: Added refresh buttons to update resident lists when residents are added or modified
+
+### Data Entry Validation
+
+The payment and expense entry forms now include comprehensive validation:
+
+- Required field validation for all essential fields
+- Date validation to prevent unreasonable dates (future dates, dates too far in the past)
+- Amount validation to ensure positive values and reasonable limits
+- Text length validation to prevent overly long descriptions and reference numbers
+- Flat number validation to prevent invalid characters
+- Visual highlighting of invalid fields for quick identification and correction
+
+### Resident Management in Ledger Forms
+
+The ledger entry forms (Payment and Expense) now feature improved resident management:
+
+- **Automatic Sorting**: Resident flat numbers are displayed in proper ascending alphanumeric order (A1, A2, A10)
+- **Refresh Button**: Added "Refresh Resident List" buttons to update resident lists when changes occur in the Resident Management module
+- **Selection Preservation**: Current selections are maintained when refreshing resident lists
+- **Consistent Experience**: All ledger entry points show the same sorted resident list
 
 1. **Ledger Report**: Complete transaction history with running balances and date range filtering.
 2. **Outstanding Dues Report**: Lists residents who have not paid maintenance fees, showing the number of months due and the total amount owed, with date range filtering.
@@ -257,6 +289,10 @@ This script will:
 
 - Enhanced watermark visibility by placing it at three horizontal locations (top, middle, and bottom) instead of a single rotated watermark
 - Added comprehensive payment and expense reports with detailed transaction information
+- Improved ledger table structure with standardized columns and user-friendly identifiers
+- Enhanced data entry forms with comprehensive validation and visual feedback
+- Fixed ledger balance calculations for accurate financial tracking
+- Standardized bank reconciliation interface with consistent table structure
 - Improved summary reports to include both category summaries and detailed transaction lists with transaction IDs and dates
 - Made date range fields always visible and functional for all report types in the GUI
 - Implemented proper error handling and user feedback for all report generation operations
@@ -269,6 +305,9 @@ This script will:
 - **Enhanced resident management with car and scooter number tracking**
 - **Implemented comprehensive transaction reversal system**
 - **Enhanced database error handling with comprehensive testing procedures**
+- **Improved data entry validation with visual feedback and comprehensive field validation**
+- **Added automatic resident sorting and refresh functionality in ledger forms**
+- **Added automatic resident sorting and refresh functionality in ledger forms**
 
 ## Database
 

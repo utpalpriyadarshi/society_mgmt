@@ -11,6 +11,8 @@ from models.resident import ResidentManager
 from gui.reconciliation_tab import ReconciliationTab
 from models.transaction_reversal import TransactionReversalManager
 from gui.reversal_dialog import ReversalDialog
+from utils.form_validation import validate_form_data
+from utils.resident_utils import get_sorted_flat_numbers
 
 class LedgerForm(QWidget):
     def __init__(self, parent=None, current_user=None):
@@ -43,8 +45,8 @@ class LedgerForm(QWidget):
         
         # Ledger Table
         self.table = QTableWidget()
-        self.table.setColumnCount(13)
-        headers = ["Transaction ID", "Date", "Flat No", "Type", "Category", "Description", "Debit", "Credit", "Balance", "Payment Mode", "Entered By", "Created At", "Status"]
+        self.table.setColumnCount(14)
+        headers = ["S.N", "Transaction ID", "Date", "Flat No", "Type", "Category", "Description", "Debit", "Credit", "Balance", "Payment Mode", "Entered By", "Created At", "Status"]
         self.table.setHorizontalHeaderLabels(headers)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -72,19 +74,20 @@ class LedgerForm(QWidget):
         self.table.setRowCount(len(transactions))
         
         for row, transaction in enumerate(transactions):
-            self.table.setItem(row, 0, QTableWidgetItem(transaction.transaction_id))
-            self.table.setItem(row, 1, QTableWidgetItem(transaction.date))
-            self.table.setItem(row, 2, QTableWidgetItem(transaction.flat_no or ""))
-            self.table.setItem(row, 3, QTableWidgetItem(transaction.transaction_type))
-            self.table.setItem(row, 4, QTableWidgetItem(transaction.category))
-            self.table.setItem(row, 5, QTableWidgetItem(transaction.description))
-            self.table.setItem(row, 6, QTableWidgetItem(str(transaction.debit)))
-            self.table.setItem(row, 7, QTableWidgetItem(str(transaction.credit)))
-            self.table.setItem(row, 8, QTableWidgetItem(str(transaction.balance)))
-            self.table.setItem(row, 9, QTableWidgetItem(transaction.payment_mode))
-            self.table.setItem(row, 10, QTableWidgetItem(transaction.entered_by))
-            self.table.setItem(row, 11, QTableWidgetItem(transaction.created_at or ""))
-            self.table.setItem(row, 12, QTableWidgetItem(transaction.reconciliation_status))
+            self.table.setItem(row, 0, QTableWidgetItem(str(row + 1)))  # S.N
+            self.table.setItem(row, 1, QTableWidgetItem(transaction.transaction_id))
+            self.table.setItem(row, 2, QTableWidgetItem(transaction.date))
+            self.table.setItem(row, 3, QTableWidgetItem(transaction.flat_no or ""))
+            self.table.setItem(row, 4, QTableWidgetItem(transaction.transaction_type))
+            self.table.setItem(row, 5, QTableWidgetItem(transaction.category))
+            self.table.setItem(row, 6, QTableWidgetItem(transaction.description))
+            self.table.setItem(row, 7, QTableWidgetItem(str(transaction.debit)))
+            self.table.setItem(row, 8, QTableWidgetItem(str(transaction.credit)))
+            self.table.setItem(row, 9, QTableWidgetItem(str(transaction.balance)))
+            self.table.setItem(row, 10, QTableWidgetItem(transaction.payment_mode))
+            self.table.setItem(row, 11, QTableWidgetItem(transaction.entered_by))
+            self.table.setItem(row, 12, QTableWidgetItem(transaction.created_at or ""))
+            self.table.setItem(row, 13, QTableWidgetItem(transaction.reconciliation_status))
 
     def on_selection_changed(self):
         """Enable/disable buttons based on table selection"""
@@ -99,7 +102,7 @@ class LedgerForm(QWidget):
             return
         
         row = selected_rows[0].row()
-        transaction_id = self.table.item(row, 0).text()
+        transaction_id = self.table.item(row, 1).text()  # Changed from column 0 to 1
         
         # Get transaction details
         transactions = self.ledger_manager.get_all_transactions()
@@ -180,26 +183,58 @@ class PaymentTab(QWidget):
         
         layout.addLayout(form_layout)
         
-        # Save Button
+        # Refresh and Save Buttons
+        button_layout = QHBoxLayout()
+        self.refresh_button = QPushButton("Refresh Resident List")
+        self.refresh_button.clicked.connect(self.refresh_residents)
+        button_layout.addWidget(self.refresh_button)
+        
         self.save_button = QPushButton("Record Payment")
         self.save_button.clicked.connect(self.record_payment)
-        layout.addWidget(self.save_button)
+        button_layout.addWidget(self.save_button)
+        
+        layout.addLayout(button_layout)
         
         self.setLayout(layout)
     
     def load_residents(self):
-        """Load residents into the flat no combobox"""
+        """Load residents into the flat no combobox in sorted order"""
         residents = self.resident_manager.get_all_residents()
+        sorted_flat_numbers = get_sorted_flat_numbers(residents)
+        
         self.flat_no_input.addItem("")  # Empty option
-        for resident in residents:
-            self.flat_no_input.addItem(resident.flat_no)
+        for flat_no in sorted_flat_numbers:
+            self.flat_no_input.addItem(flat_no)
+    
+    def refresh_residents(self):
+        """Refresh the resident list in the flat no combobox"""
+        # Save current selection if any
+        current_selection = self.flat_no_input.currentText()
+        
+        # Clear and reload
+        self.flat_no_input.clear()
+        self.load_residents()
+        
+        # Restore selection if it still exists
+        index = self.flat_no_input.findText(current_selection)
+        if index >= 0:
+            self.flat_no_input.setCurrentIndex(index)
     
     def record_payment(self):
-        # Validate required fields
-        if self.amount_input.value() <= 0:
-            QMessageBox.warning(self, "Validation Error", "Amount must be greater than zero.")
-            return
+        # Prepare form data for validation
+        form_data = {
+            'date': self.date_input,
+            'category': self.category_input,
+            'amount': self.amount_input,
+            'payment_mode': self.payment_mode_input,
+            'description': self.description_input,
+            'flat_no': self.flat_no_input
+        }
         
+        # Validate all form data
+        if not validate_form_data(form_data, self):
+            return
+            
         transaction_id = self.ledger_manager.add_transaction(
             self.date_input.date().toString("yyyy-MM-dd"),
             self.flat_no_input.currentText() if self.flat_no_input.currentText() else None,
@@ -228,7 +263,21 @@ class PaymentTab(QWidget):
         self.description_input.clear()
         self.amount_input.setValue(0.0)
         self.payment_mode_input.setCurrentIndex(0)
-
+    
+    def refresh_residents(self):
+        """Refresh the resident list in the flat no combobox"""
+        # Save current selection if any
+        current_selection = self.flat_no_input.currentText()
+        
+        # Clear and reload
+        self.flat_no_input.clear()
+        self.load_residents()
+        
+        # Restore selection if it still exists
+        index = self.flat_no_input.findText(current_selection)
+        if index >= 0:
+            self.flat_no_input.setCurrentIndex(index)
+    
 class ExpenseTab(QWidget):
     def __init__(self, parent=None, current_user=None):
         super().__init__(parent)
@@ -284,24 +333,42 @@ class ExpenseTab(QWidget):
         
         layout.addLayout(form_layout)
         
-        # Save Button
+        # Refresh and Save Buttons
+        button_layout = QHBoxLayout()
+        self.refresh_button = QPushButton("Refresh Resident List")
+        self.refresh_button.clicked.connect(self.refresh_residents)
+        button_layout.addWidget(self.refresh_button)
+        
         self.save_button = QPushButton("Record Expense")
         self.save_button.clicked.connect(self.record_expense)
-        layout.addWidget(self.save_button)
+        button_layout.addWidget(self.save_button)
+        
+        layout.addLayout(button_layout)
         
         self.setLayout(layout)
     
     def load_residents(self):
-        """Load residents into the flat no combobox"""
+        """Load residents into the flat no combobox in sorted order"""
         residents = self.resident_manager.get_all_residents()
+        sorted_flat_numbers = get_sorted_flat_numbers(residents)
+        
         self.flat_no_input.addItem("")  # Empty option
-        for resident in residents:
-            self.flat_no_input.addItem(resident.flat_no)
+        for flat_no in sorted_flat_numbers:
+            self.flat_no_input.addItem(flat_no)
     
     def record_expense(self):
-        # Validate required fields
-        if self.amount_input.value() <= 0:
-            QMessageBox.warning(self, "Validation Error", "Amount must be greater than zero.")
+        # Prepare form data for validation
+        form_data = {
+            'date': self.date_input,
+            'category': self.category_input,
+            'amount': self.amount_input,
+            'payment_mode': self.payment_mode_input,
+            'description': self.description_input,
+            'flat_no': self.flat_no_input
+        }
+        
+        # Validate all form data
+        if not validate_form_data(form_data, self):
             return
         
         transaction_id = self.ledger_manager.add_transaction(
@@ -332,3 +399,17 @@ class ExpenseTab(QWidget):
         self.description_input.clear()
         self.amount_input.setValue(0.0)
         self.payment_mode_input.setCurrentIndex(0)
+    
+    def refresh_residents(self):
+        """Refresh the resident list in the flat no combobox"""
+        # Save current selection if any
+        current_selection = self.flat_no_input.currentText()
+        
+        # Clear and reload
+        self.flat_no_input.clear()
+        self.load_residents()
+        
+        # Restore selection if it still exists
+        index = self.flat_no_input.findText(current_selection)
+        if index >= 0:
+            self.flat_no_input.setCurrentIndex(index)
