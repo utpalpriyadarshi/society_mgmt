@@ -45,7 +45,7 @@ class PaymentForm(QWidget):
             txn_id = self.ledger_manager.add_transaction(
                 data['date'], data['flat_no'], 'Payment', data['category'],
                 data['description'], 0.0, data['amount'], data['payment_mode'],
-                data['reference_no'], data['entered_by']
+                data['entered_by']
             )
             
             if txn_id:
