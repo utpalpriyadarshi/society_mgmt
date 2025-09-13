@@ -8,6 +8,8 @@ from PyQt5.QtWidgets import (QWidget, QTableWidget, QTableWidgetItem,
 from PyQt5.QtCore import QDate
 from models.ledger import LedgerManager
 from models.resident import ResidentManager
+from utils.form_validation import validate_form_data
+from utils.resident_utils import get_sorted_flat_numbers
 
 class PaymentForm(QWidget):
     def __init__(self, parent=None, current_user=None):
@@ -28,8 +30,8 @@ class PaymentForm(QWidget):
         
         # Table - Ledger View
         self.table = QTableWidget()
-        self.table.setColumnCount(10)
-        headers = ["Txn ID", "Date", "Flat No", "Type", "Category", "Description", 
+        self.table.setColumnCount(11)
+        headers = ["S.N", "Txn ID", "Date", "Flat No", "Type", "Category", "Description", 
                   "Debit", "Credit", "Balance", "Payment Mode"]
         self.table.setHorizontalHeaderLabels(headers)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
@@ -60,16 +62,17 @@ class PaymentForm(QWidget):
         self.table.setRowCount(len(transactions))
         
         for row, transaction in enumerate(transactions):
-            self.table.setItem(row, 0, QTableWidgetItem(str(transaction.txn_id)))
-            self.table.setItem(row, 1, QTableWidgetItem(transaction.date))
-            self.table.setItem(row, 2, QTableWidgetItem(transaction.flat_no or ""))
-            self.table.setItem(row, 3, QTableWidgetItem(transaction.txn_type))
-            self.table.setItem(row, 4, QTableWidgetItem(transaction.category))
-            self.table.setItem(row, 5, QTableWidgetItem(transaction.description))
-            self.table.setItem(row, 6, QTableWidgetItem(str(transaction.debit)))
-            self.table.setItem(row, 7, QTableWidgetItem(str(transaction.credit)))
-            self.table.setItem(row, 8, QTableWidgetItem(str(transaction.balance)))
-            self.table.setItem(row, 9, QTableWidgetItem(transaction.payment_mode))
+            self.table.setItem(row, 0, QTableWidgetItem(str(row + 1)))  # S.N
+            self.table.setItem(row, 1, QTableWidgetItem(str(transaction.transaction_id)))
+            self.table.setItem(row, 2, QTableWidgetItem(transaction.date))
+            self.table.setItem(row, 3, QTableWidgetItem(transaction.flat_no or ""))
+            self.table.setItem(row, 4, QTableWidgetItem(transaction.transaction_type))
+            self.table.setItem(row, 5, QTableWidgetItem(transaction.category))
+            self.table.setItem(row, 6, QTableWidgetItem(transaction.description))
+            self.table.setItem(row, 7, QTableWidgetItem(str(transaction.debit)))
+            self.table.setItem(row, 8, QTableWidgetItem(str(transaction.credit)))
+            self.table.setItem(row, 9, QTableWidgetItem(str(transaction.balance)))
+            self.table.setItem(row, 10, QTableWidgetItem(transaction.payment_mode))
 
 class PaymentDialog(QDialog):
     def __init__(self, parent=None, current_user=None):
@@ -132,22 +135,47 @@ class PaymentDialog(QDialog):
         
         layout.addLayout(form_layout)
         
+        # Refresh button for residents
+        refresh_button = QPushButton("Refresh Resident List")
+        refresh_button.clicked.connect(self.refresh_residents)
+        
         # Buttons
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(refresh_button)
+        button_layout.addStretch()
+        
         button_box = QDialogButtonBox(
             QDialogButtonBox.Ok | QDialogButtonBox.Cancel
         )
+        button_layout.addWidget(button_box)
+        layout.addLayout(button_layout)
+        
         button_box.accepted.connect(self.accept)
         button_box.rejected.connect(self.reject)
-        layout.addWidget(button_box)
-        
         self.setLayout(layout)
     
     def load_residents(self):
-        """Load residents into the flat no combobox"""
+        """Load residents into the flat no combobox in sorted order"""
         residents = self.resident_manager.get_all_residents()
+        sorted_flat_numbers = get_sorted_flat_numbers(residents)
+        
         self.flat_no_input.addItem("")  # Empty option
-        for resident in residents:
-            self.flat_no_input.addItem(resident.flat_no)
+        for flat_no in sorted_flat_numbers:
+            self.flat_no_input.addItem(flat_no)
+    
+    def refresh_residents(self):
+        """Refresh the resident list in the flat no combobox"""
+        # Save current selection if any
+        current_selection = self.flat_no_input.currentText()
+        
+        # Clear and reload
+        self.flat_no_input.clear()
+        self.load_residents()
+        
+        # Restore selection if it still exists
+        index = self.flat_no_input.findText(current_selection)
+        if index >= 0:
+            self.flat_no_input.setCurrentIndex(index)
     
     def get_data(self):
         return {
@@ -162,9 +190,19 @@ class PaymentDialog(QDialog):
         }
     
     def accept(self):
-        # Validate required fields
-        if self.amount_input.value() <= 0:
-            QMessageBox.warning(self, "Validation Error", "Amount must be greater than zero.")
+        # Prepare form data for validation
+        form_data = {
+            'date': self.date_input,
+            'category': self.category_input,
+            'amount': self.amount_input,
+            'payment_mode': self.payment_mode_input,
+            'description': self.description_input,
+            'reference_no': self.reference_no_input,
+            'flat_no': self.flat_no_input
+        }
+        
+        # Validate all form data
+        if not validate_form_data(form_data, self):
             return
             
         super().accept()

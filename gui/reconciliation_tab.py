@@ -71,7 +71,7 @@ class ReconciliationTab(QWidget):
         
         self.ledger_table = QTableWidget()
         self.ledger_table.setColumnCount(13)
-        headers = ["ID", "Transaction ID", "Date", "Flat No", "Type", "Category", "Description", 
+        headers = ["S.N", "Transaction ID", "Date", "Flat No", "Type", "Category", "Description", 
                   "Debit", "Credit", "Balance", "Payment Mode", "Status", "Select"]
         self.ledger_table.setHorizontalHeaderLabels(headers)
         self.ledger_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
@@ -87,7 +87,7 @@ class ReconciliationTab(QWidget):
         
         self.bank_table = QTableWidget()
         self.bank_table.setColumnCount(9)
-        headers = ["ID", "Date", "Description", "Amount", "Balance", "Reference", "Import Date", "Status", "Select"]
+        headers = ["S.N", "Reference No", "Date", "Description", "Amount", "Balance", "Import Date", "Status", "Select"]
         self.bank_table.setHorizontalHeaderLabels(headers)
         self.bank_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.bank_table.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -405,8 +405,8 @@ class ReconciliationTab(QWidget):
             checkbox = QCheckBox()
             checkbox.setProperty('transaction_id', transaction.id)
             
-            self.ledger_table.setItem(row, 0, QTableWidgetItem(str(transaction.id)))
-            self.ledger_table.setItem(row, 1, QTableWidgetItem(transaction.transaction_id))
+            self.ledger_table.setItem(row, 0, QTableWidgetItem(str(row + 1)))  # S.N
+            self.ledger_table.setItem(row, 1, QTableWidgetItem(transaction.transaction_id))  # Transaction ID only
             self.ledger_table.setItem(row, 2, QTableWidgetItem(transaction.date))
             self.ledger_table.setItem(row, 3, QTableWidgetItem(transaction.flat_no or ""))
             self.ledger_table.setItem(row, 4, QTableWidgetItem(transaction.transaction_type))
@@ -441,12 +441,12 @@ class ReconciliationTab(QWidget):
             checkbox = QCheckBox()
             checkbox.setProperty('entry_id', entry.id)
             
-            self.bank_table.setItem(row, 0, QTableWidgetItem(str(entry.id)))
-            self.bank_table.setItem(row, 1, QTableWidgetItem(entry.date))
-            self.bank_table.setItem(row, 2, QTableWidgetItem(entry.description))
-            self.bank_table.setItem(row, 3, QTableWidgetItem(str(entry.amount)))
-            self.bank_table.setItem(row, 4, QTableWidgetItem(str(entry.balance)))
-            self.bank_table.setItem(row, 5, QTableWidgetItem(entry.reference_number or ""))
+            self.bank_table.setItem(row, 0, QTableWidgetItem(str(row + 1)))  # S.N
+            self.bank_table.setItem(row, 1, QTableWidgetItem(entry.reference_number or ""))  # Reference No
+            self.bank_table.setItem(row, 2, QTableWidgetItem(entry.date))
+            self.bank_table.setItem(row, 3, QTableWidgetItem(entry.description))
+            self.bank_table.setItem(row, 4, QTableWidgetItem(str(entry.amount)))
+            self.bank_table.setItem(row, 5, QTableWidgetItem(str(entry.balance)))
             self.bank_table.setItem(row, 6, QTableWidgetItem(entry.import_date or ""))
             self.bank_table.setItem(row, 7, QTableWidgetItem(entry.reconciliation_status))
             
@@ -504,15 +504,15 @@ class ReconciliationTab(QWidget):
     def find_ledger_row(self, transaction_id):
         """Find the row index for a ledger transaction"""
         for row in range(self.ledger_table.rowCount()):
-            item = self.ledger_table.item(row, 0)  # ID column
-            if item and int(item.text()) == transaction_id:
+            item = self.ledger_table.item(row, 1)  # Transaction ID column
+            if item and item.text() == transaction_id:
                 return row
         return None
     
     def find_bank_row(self, entry_id):
         """Find the row index for a bank entry"""
         for row in range(self.bank_table.rowCount()):
-            item = self.bank_table.item(row, 0)  # ID column
+            item = self.bank_table.item(row, 0)  # ID column (we still need the database ID for reconciliation)
             if item and int(item.text()) == entry_id:
                 return row
         return None
@@ -559,7 +559,8 @@ class ReconciliationTab(QWidget):
                 bank_row = selected_bank_rows[i]
                 
                 # Get transaction IDs
-                ledger_id = int(self.ledger_table.item(ledger_row, 0).text())
+                transaction_id = self.ledger_table.item(ledger_row, 1).text()  # Transaction ID (string)
+                ledger_id = self.ledger_manager.get_database_id_by_transaction_id(transaction_id)  # Get database ID
                 bank_id = int(self.bank_table.item(bank_row, 0).text())
                 
                 # Store the matched pairs for later highlighting
