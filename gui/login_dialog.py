@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (QDialog, QLabel, QLineEdit,
                              QPushButton, QVBoxLayout, QHBoxLayout,
-                             QMessageBox, QFrame, QApplication, QCheckBox)
+                             QMessageBox, QFrame, QApplication, QCheckBox, QProgressBar)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QPixmap
 from utils.security import authenticate_user
@@ -40,12 +40,10 @@ class LoginDialog(QDialog):
         logo_path = os.path.join("assets", "nextgenlogo.png")
         logo_pixmap = QPixmap(logo_path)
         if not logo_pixmap.isNull():
-            # Scale the logo to a reasonable size
             logo_pixmap = logo_pixmap.scaled(80, 80, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             logo_label.setPixmap(logo_pixmap)
             logo_label.setAlignment(Qt.AlignCenter)
         else:
-            # Fallback if logo not found
             logo_label.setText("LOGO")
             logo_label.setAlignment(Qt.AlignCenter)
             logo_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #3498db;")
@@ -73,7 +71,6 @@ class LoginDialog(QDialog):
         self.username_input = QLineEdit()
         self.username_input.setPlaceholderText("Enter your username")
         self.username_input.setStyleSheet("""
-
             QLineEdit {
                 padding: 12px;
                 border: 2px solid #ddd;
@@ -91,7 +88,6 @@ class LoginDialog(QDialog):
         self.username_input.returnPressed.connect(self.authenticate)
         
         # Password field
-        # Create a horizontal layout for the password field and toggle button
         password_layout = QHBoxLayout()
         password_layout.setSpacing(5)
         
@@ -99,7 +95,6 @@ class LoginDialog(QDialog):
         self.password_input.setPlaceholderText("Enter your password")
         self.password_input.setEchoMode(QLineEdit.Password)
         self.password_input.setStyleSheet("""
-
             QLineEdit {
                 padding: 12px;
                 border: 2px solid #ddd;
@@ -116,11 +111,9 @@ class LoginDialog(QDialog):
         """)
         self.password_input.returnPressed.connect(self.authenticate)
         
-        # Password visibility toggle button
         self.toggle_password_button = QPushButton("👁")
         self.toggle_password_button.setFixedSize(30, 30)
         self.toggle_password_button.setStyleSheet("""
-
             QPushButton {
                 background-color: #3498db;
                 color: white;
@@ -140,10 +133,8 @@ class LoginDialog(QDialog):
         password_layout.addWidget(self.password_input)
         password_layout.addWidget(self.toggle_password_button)
         
-        # Remember me checkbox
         self.remember_me_checkbox = QCheckBox("Remember me")
         self.remember_me_checkbox.setStyleSheet("""
-
             QCheckBox {
                 color: #2c3e50;
                 font-size: 14px;
@@ -164,10 +155,8 @@ class LoginDialog(QDialog):
             }
         """)
         
-        # Forgot password link
         self.forgot_password_link = QPushButton("Forgot Password?")
         self.forgot_password_link.setStyleSheet("""
-
             QPushButton {
                 color: #3498db;
                 background-color: transparent;
@@ -185,16 +174,13 @@ class LoginDialog(QDialog):
         self.forgot_password_link.setCursor(Qt.PointingHandCursor)
         self.forgot_password_link.clicked.connect(self.show_forgot_password_dialog)
         
-        # Add widgets to form layout
         form_layout.addWidget(self.username_input)
         form_layout.addLayout(password_layout)
         form_layout.addWidget(self.remember_me_checkbox)
         form_layout.addWidget(self.forgot_password_link)
         
-        # Login button
         self.login_button = QPushButton("Sign In")
         self.login_button.setStyleSheet("""
-
             QPushButton {
                 background-color: #3498db;
                 color: white;
@@ -214,13 +200,11 @@ class LoginDialog(QDialog):
         """)
         self.login_button.clicked.connect(self.authenticate)
         self.login_button.setCursor(Qt.PointingHandCursor)
-        self.login_button.setDefault(True)  # Make this the default button
+        self.login_button.setDefault(True)
         
-        # Theme toggle button
         self.theme_button = QPushButton("🌙")
         self.theme_button.setFixedSize(30, 30)
         self.theme_button.setStyleSheet("""
-
             QPushButton {
                 background-color: #3498db;
                 color: white;
@@ -238,20 +222,23 @@ class LoginDialog(QDialog):
         """)
         self.theme_button.clicked.connect(self.toggle_theme)
         
-        # Create a horizontal layout for the buttons
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.login_button)
-        button_layout.addStretch()  # Add stretch to push the theme button to the right
+        button_layout.addStretch()
         button_layout.addWidget(self.theme_button)
         
-        # Add all elements to left layout
         left_layout.addWidget(logo_label)
         left_layout.addWidget(title_label)
         left_layout.addWidget(subtitle_label)
         left_layout.addLayout(form_layout)
         left_layout.addLayout(button_layout)
-        
-        # Spacer to push content to the top
+
+        # Progress bar for loading indication
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 0)  # Indeterminate progress bar
+        self.progress_bar.setVisible(False)
+        left_layout.addWidget(self.progress_bar)
+
         left_layout.addStretch()
         
         self.left_section.setLayout(left_layout)
@@ -260,54 +247,33 @@ class LoginDialog(QDialog):
         self.right_section = QFrame()
         self.right_section.setObjectName("imageSection")
         
-        # Create a layout for the right section
         right_layout = QVBoxLayout()
         right_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.setSpacing(0)
         
-        # Set the background image using QLabel and QPixmap
         image_path = os.path.join("assets", "SocietyImage1.jpg")
-        if os.path.exists(image_path):
-            image_label = QLabel()
-            pixmap = QPixmap(image_path)
-            if not pixmap.isNull():
-                # Scale the pixmap to fit the section while maintaining aspect ratio
-                image_label.setPixmap(pixmap)
-                image_label.setAlignment(Qt.AlignCenter)
-                image_label.setStyleSheet("background-color: #3498db;")
-                image_label.setScaledContents(True)
-                right_layout.addWidget(image_label)
-            else:
-                # Fallback if image cannot be loaded
-                fallback_label = QLabel()
-                fallback_label.setStyleSheet("""
-
-                    background-color: #3498db;
-                    border-top-right-radius: 10px;
-                    border-bottom-right-radius: 10px;
-                """)
-                right_layout.addWidget(fallback_label)
+        self.image_label = QLabel()
+        self.pixmap = QPixmap(image_path)
+        
+        if not self.pixmap.isNull():
+            self.image_label.setAlignment(Qt.AlignCenter)
+            right_layout.addWidget(self.image_label)
+            self.update_image()  # Initial image scaling
         else:
-            # Fallback if image file not found
             fallback_label = QLabel()
             fallback_label.setStyleSheet("""
-
                 background-color: #3498db;
                 border-top-right-radius: 10px;
                 border-bottom-right-radius: 10px;
             """)
             right_layout.addWidget(fallback_label)
-        
+            
         self.right_section.setLayout(right_layout)
         
-        # Add sections to main layout
-        main_layout.addWidget(self.left_section, 1)  # Left section takes 1 part
-        main_layout.addWidget(self.right_section, 1)  # Right section takes 1 part
+        main_layout.addWidget(self.left_section, 1)
+        main_layout.addWidget(self.right_section, 1)
         
-        # Set main layout
         self.setLayout(main_layout)
-        
-        # Set focus to username field
         self.username_input.setFocus()
     
     def toggle_theme(self):
@@ -641,51 +607,64 @@ class LoginDialog(QDialog):
             QMessageBox.warning(self, "Login Failed", "Please enter your password")
             self.password_input.setFocus()
             return
-        
-        # Create a session for the user (to get session ID for audit logging)
-        session_id = session_manager.create_session(username)
-        
-        # Use proper authentication with audit logging
-        # Note: In a real application, you would get the actual IP address
-        # For now, we'll use a placeholder
-        ip_address = "127.0.0.1"  # Placeholder for local testing
-        user_role = authenticate_user(username, password, ip_address, session_id)
-        
-        if user_role:
-            config = load_config()
-            if self.remember_me_checkbox.isChecked():
-                config['remember_me'] = True
-                config['username'] = username
+
+        # Show loading indicator
+        self.progress_bar.setVisible(True)
+        self.username_input.setEnabled(False)
+        self.password_input.setEnabled(False)
+        self.login_button.setEnabled(False)
+
+        try:
+            # Create a session for the user (to get session ID for audit logging)
+            session_id = session_manager.create_session(username)
+            
+            # Use proper authentication with audit logging
+            # Note: In a real application, you would get the actual IP address
+            # For now, we'll use a placeholder
+            ip_address = "127.0.0.1"  # Placeholder for local testing
+            user_role = authenticate_user(username, password, ip_address, session_id)
+            
+            if user_role:
+                config = load_config()
+                if self.remember_me_checkbox.isChecked():
+                    config['remember_me'] = True
+                    config['username'] = username
+                else:
+                    config['remember_me'] = False
+                    config.pop('username', None)
+                save_config(config)
+                # In a real application, you would store the session_id securely
+                # For this example, we'll  just print it
+                print(f"Session created for {username}: {session_id}")
+                self.accept()
             else:
-                config['remember_me'] = False
-                config.pop('username', None)
-            save_config(config)
-            # In a real application, you would store the session_id securely
-            # For this example, we'll  just print it
-            print(f"Session created for {username}: {session_id}")
-            self.accept()
-        else:
-            # Check if the account is locked
-            locked_until = None
-            with get_db_connection('society_management.db') as conn:
-                cursor = conn.cursor()
-                cursor.execute('''
-                SELECT locked_until FROM users WHERE username = ?
-                ''', (username,))
+                # Check if the account is locked
+                locked_until = None
+                with get_db_connection('society_management.db') as conn:
+                    cursor = conn.cursor()
+                    cursor.execute('''
+                    SELECT locked_until FROM users WHERE username = ?
+                    ''', (username,))
+                    
+                    result = cursor.fetchone()
+                    if result and result[0]:
+                        locked_until = datetime.fromisoformat(result[0])
                 
-                result = cursor.fetchone()
-                if result and result[0]:
-                    locked_until = datetime.fromisoformat(result[0])
-            
-            if locked_until and datetime.now() < locked_until:
-                remaining_time = locked_until - datetime.now()
-                minutes = int(remaining_time.total_seconds() // 60)
-                QMessageBox.warning(self, "Login Failed", f"Account is locked. Please try again in {minutes} minutes.")
-            else:
-                QMessageBox.warning(self, "Login Failed", "Invalid username or password")
-            
-            self.password_input.clear()
-            self.password_input.setFocus()
+                if locked_until and datetime.now() < locked_until:
+                    remaining_time = locked_until - datetime.now()
+                    minutes = int(remaining_time.total_seconds() // 60)
+                    QMessageBox.warning(self, "Login Failed", f"Account is locked. Please try again in {minutes} minutes.")
+                else:
+                    QMessageBox.warning(self, "Login Failed", "Invalid username or password")
+                
+                self.password_input.clear()
+                self.password_input.setFocus()
+        finally:
+            # Hide loading indicator
+            self.progress_bar.setVisible(False)
+            self.username_input.setEnabled(True)
+            self.password_input.setEnabled(True)
+            self.login_button.setEnabled(True)
 
     def load_user_preferences(self):
         config = load_config()
@@ -693,16 +672,24 @@ class LoginDialog(QDialog):
             self.username_input.setText(config.get('username', ''))
             self.remember_me_checkbox.setChecked(True)
 
-    def load_user_preferences(self):
-        config = load_config()
-        if config.get('remember_me'):
-            self.username_input.setText(config.get('username', ''))
-            self.remember_me_checkbox.setChecked(True)
-
+    
     def show_forgot_password_dialog(self):
         """Show the forgot password dialog"""
         dialog = ForgotPasswordDialog(self)
         dialog.exec_()
+
+    def update_image(self):
+        if not self.pixmap.isNull():
+            scaled_pixmap = self.pixmap.scaled(
+                self.right_section.size(),
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation
+            )
+            self.image_label.setPixmap(scaled_pixmap)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.update_image()
 
 
 class ForgotPasswordDialog(QDialog):

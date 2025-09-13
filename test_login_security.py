@@ -33,7 +33,7 @@ def test_authentication():
     print("\nTesting user authentication...")
     
     # Test with sysadmin user (default password should be 'systemadmin')
-    result = authenticate_user("sysadmin", "systemadmin")
+    result = authenticate_user("sysadmin", "systemadmin", ip_address="127.0.0.1", session_id="test_session")
     if result:
         print("[PASS] Authentication successful for sysadmin")
         print(f"  User role: {result}")
@@ -41,6 +41,7 @@ def test_authentication():
     else:
         print("[FAIL] Authentication failed for sysadmin")
         return False
+
 
 def test_failed_login_attempts():
     """Test failed login attempts tracking"""
@@ -134,6 +135,14 @@ def test_session_management():
         print("[FAIL] Session validation failed")
         return False
 
+def cleanup():
+    """Clean up the database after tests"""
+    conn = sqlite3.connect('society_management.db')
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE username = 'sysadmin'")
+    conn.commit()
+    conn.close()
+
 def main():
     """Run all tests"""
     print("Login Security Feature Tests")
@@ -158,6 +167,8 @@ def main():
         print("All tests passed! Login security features are working correctly.")
     else:
         print("Some tests failed. Please check the implementation.")
+    
+    cleanup()
 
 if __name__ == "__main__":
     main()
