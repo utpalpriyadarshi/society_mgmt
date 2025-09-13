@@ -209,7 +209,7 @@ class DatabaseErrorHandlingTest:
         
         # Test normal operation
         try:
-            result = authenticate_user("sysadmin", "systemadmin")
+            result = authenticate_user("sysadmin", "systemadmin", ip_address="127.0.0.1", session_id="test_session")
             if result:
                 print("[PASS] Authentication works normally")
             else:
