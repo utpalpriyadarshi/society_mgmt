@@ -15,6 +15,7 @@ A desktop application for managing residential society operations built with Pyt
 - **Database Backup**: Create backups of the entire database for safekeeping.
 - **Dark Mode**: Toggle between light and dark themes for comfortable viewing in different lighting conditions.
 - **Enhanced Ledger System**: Improved ledger tables with standardized structure, user-friendly identifiers, comprehensive data validation, and automatic resident sorting with refresh functionality.
+- **Improved Bank Statement Import**: Enhanced duplicate detection to prevent importing of duplicate or near-duplicate entries.
 
 ## Technology Stack
 
