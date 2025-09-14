@@ -20,7 +20,7 @@ class MainController:
             
             # Authenticate user
             user_role = authenticate_user(username, password)
-            if user_role:
+            if user_role:                
                 print("Login successful!")
                 self.current_username = username
                 self.current_role = user_role
