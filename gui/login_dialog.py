@@ -1,6 +1,8 @@
 from PyQt5.QtWidgets import (QDialog, QLabel, QLineEdit,
                              QPushButton, QVBoxLayout, QHBoxLayout,
-                             QMessageBox, QFrame, QApplication, QCheckBox, QProgressBar)
+                             QMessageBox, QFrame, QApplication, QCheckBox, QProgressBar,
+                             QFormLayout, QDialogButtonBox, QTextEdit, QWidget, QGroupBox,
+                             QFontDialog)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QPixmap
 from utils.security import authenticate_user
@@ -9,6 +11,7 @@ from utils.db_context import get_db_connection
 from utils.config import load_config, save_config
 from datetime import datetime
 import os
+import pyotp
 
 
 class LoginDialog(QDialog):
@@ -801,7 +804,7 @@ class ForgotPasswordDialog(QDialog):
         self.username_input.setFocus()
     
     def reset_password(self):
-        """Handle password reset request"""
+        """Handle password reset request with TOTP verification"""
         username = self.username_input.text().strip()
         
         if not username:
@@ -809,11 +812,14 @@ class ForgotPasswordDialog(QDialog):
             self.username_input.setFocus()
             return
             
-        # Check if user exists
+        # Check if user exists and has TOTP enabled
         from utils.db_context import get_db_connection
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+            cursor.execute(
+                "SELECT id, totp_secret, totp_enabled FROM users WHERE username = ?", 
+                (username,)
+            )
             result = cursor.fetchone()
             
         if not result:
@@ -821,25 +827,275 @@ class ForgotPasswordDialog(QDialog):
             self.username_input.setFocus()
             return
             
-        # In a real application, you would:
-        # 1. Generate a secure reset token
-        # 2. Store it in the database with an expiration time
-        # 3. Provide a way for the user to reset their password
-        #    (in a real app, you would send an email, but this app doesn't have email functionality)
+        user_id, totp_secret, totp_enabled = result
         
-        # For this demo, we'll just show a message
-        QMessageBox.information(
-            self, 
-            "Reset Password", 
-            "In a production environment, this system would send you instructions to reset your password.\n\n" 
-            "Since this is a demo application without email functionality, please contact your system administrator to reset your password."
-        )
-        self.accept()
+        # Check if TOTP is enabled for this user
+        if not totp_enabled or not totp_secret:
+            QMessageBox.warning(
+                self, 
+                "Reset Password", 
+                "Two-factor authentication is not enabled for this account. "
+                "Please contact your system administrator to reset your password."
+            )
+            self.username_input.setFocus()
+            return
+            
+        # Show TOTP verification dialog
+        totp_dialog = TOTPPasswordResetDialog(username, totp_secret, self)
+        if totp_dialog.exec_() == QDialog.Accepted:
+            # Password has been reset successfully
+            self.accept()
     
     def apply_theme(self):
         """Apply theme to the dialog"""
         # For simplicity, we're using a basic theme
         # In a real application, you might want to match the parent's theme
+        self.setStyleSheet("""
+            QDialog {
+                background-color: white;
+            }
+            QLabel {
+                color: #2c3e50;
+            }
+        """)
+
+
+class TOTPPasswordResetDialog(QDialog):
+    def __init__(self, username, totp_secret, parent=None):
+        super().__init__(parent)
+        self.username = username
+        self.totp_secret = totp_secret
+        self.setWindowTitle("TOTP Password Reset")
+        self.setFixedSize(400, 350)
+        self.setup_ui()
+        self.apply_theme()
+        
+    def setup_ui(self):
+        # Main layout
+        main_layout = QVBoxLayout()
+        main_layout.setSpacing(15)
+        main_layout.setContentsMargins(30, 30, 30, 30)
+        
+        # Title
+        title_label = QLabel("Password Reset")
+        title_font = QFont()
+        title_font.setPointSize(16)
+        title_font.setBold(True)
+        title_label.setFont(title_font)
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setStyleSheet("color: #2c3e50; margin-bottom: 10px;")
+        main_layout.addWidget(title_label)
+        
+        # Instructions
+        instructions_label = QLabel(
+            f"Enter the 6-digit code from your authenticator app to reset your password for user '{self.username}'."
+        )
+        instructions_label.setWordWrap(True)
+        instructions_label.setAlignment(Qt.AlignCenter)
+        instructions_label.setStyleSheet("color: #7f8c8d; font-size: 12px; margin-bottom: 20px;")
+        main_layout.addWidget(instructions_label)
+        
+        # TOTP Code
+        totp_label = QLabel("Authenticator Code*:")
+        totp_label.setStyleSheet("color: #2c3e50; font-weight: bold; font-size: 12px;")
+        self.totp_input = QLineEdit()
+        self.totp_input.setPlaceholderText("Enter 6-digit code")
+        self.totp_input.setMaxLength(6)
+        self.totp_input.setStyleSheet("""
+            QLineEdit {
+                padding: 10px;
+                border: 2px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+                background-color: white;
+            }
+            QLineEdit:focus {
+                border-color: #3498db;
+                outline: none;
+                border-width: 2px;
+            }
+        """)
+        self.totp_input.returnPressed.connect(self.verify_totp_and_reset)
+        
+        main_layout.addWidget(totp_label)
+        main_layout.addWidget(self.totp_input)
+        
+        # New Password
+        password_label = QLabel("New Password*:")
+        password_label.setStyleSheet("color: #2c3e50; font-weight: bold; font-size: 12px;")
+        self.password_input = QLineEdit()
+        self.password_input.setPlaceholderText("Enter new password")
+        self.password_input.setEchoMode(QLineEdit.Password)
+        self.password_input.setStyleSheet("""
+            QLineEdit {
+                padding: 10px;
+                border: 2px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+                background-color: white;
+            }
+            QLineEdit:focus {
+                border-color: #3498db;
+                outline: none;
+                border-width: 2px;
+            }
+        """)
+        
+        main_layout.addWidget(password_label)
+        main_layout.addWidget(self.password_input)
+        
+        # Confirm Password
+        confirm_label = QLabel("Confirm Password*:")
+        confirm_label.setStyleSheet("color: #2c3e50; font-weight: bold; font-size: 12px;")
+        self.confirm_input = QLineEdit()
+        self.confirm_input.setPlaceholderText("Confirm new password")
+        self.confirm_input.setEchoMode(QLineEdit.Password)
+        self.confirm_input.setStyleSheet("""
+            QLineEdit {
+                padding: 10px;
+                border: 2px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+                background-color: white;
+            }
+            QLineEdit:focus {
+                border-color: #3498db;
+                outline: none;
+                border-width: 2px;
+            }
+        """)
+        
+        main_layout.addWidget(confirm_label)
+        main_layout.addWidget(self.confirm_input)
+        
+        # Buttons layout
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(10)
+        
+        # Cancel button
+        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.setStyleSheet("""
+            QPushButton {
+                background-color: #95a5a6;
+                color: white;
+                border: none;
+                padding: 10px;
+                font-size: 14px;
+                border-radius: 6px;
+            }
+            QPushButton:hover {
+                background-color: #7f8c8d;
+            }
+            QPushButton:pressed {
+                background-color: #6c7a7b;
+            }
+        """)
+        self.cancel_button.clicked.connect(self.reject)
+        
+        # Reset button
+        self.reset_button = QPushButton("Reset Password")
+        self.reset_button.setStyleSheet("""
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                padding: 10px;
+                font-size: 14px;
+                border-radius: 6px;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+            QPushButton:pressed {
+                background-color: #21618c;
+            }
+        """)
+        self.reset_button.clicked.connect(self.verify_totp_and_reset)
+        
+        buttons_layout.addWidget(self.cancel_button)
+        buttons_layout.addWidget(self.reset_button)
+        
+        main_layout.addLayout(buttons_layout)
+        self.setLayout(main_layout)
+        
+        # Set focus to TOTP field
+        self.totp_input.setFocus()
+    
+    def verify_totp_and_reset(self):
+        """Verify TOTP code and reset password"""
+        # Get inputs
+        totp_code = self.totp_input.text().strip()
+        new_password = self.password_input.text()
+        confirm_password = self.confirm_input.text()
+        
+        # Validate inputs
+        if not totp_code:
+            QMessageBox.warning(self, "Validation Error", "Please enter the 6-digit code from your authenticator app.")
+            self.totp_input.setFocus()
+            return
+            
+        if len(totp_code) != 6 or not totp_code.isdigit():
+            QMessageBox.warning(self, "Validation Error", "Please enter a valid 6-digit code.")
+            self.totp_input.setFocus()
+            self.totp_input.selectAll()
+            return
+            
+        if not new_password:
+            QMessageBox.warning(self, "Validation Error", "Please enter a new password.")
+            self.password_input.setFocus()
+            return
+            
+        if len(new_password) < 6:
+            QMessageBox.warning(self, "Validation Error", "Password must be at least 6 characters long.")
+            self.password_input.setFocus()
+            self.password_input.selectAll()
+            return
+            
+        if new_password != confirm_password:
+            QMessageBox.warning(self, "Validation Error", "Passwords do not match.")
+            self.confirm_input.setFocus()
+            self.confirm_input.selectAll()
+            return
+            
+        # Verify TOTP code
+        import pyotp
+        totp = pyotp.TOTP(self.totp_secret)
+        if not totp.verify(totp_code):
+            QMessageBox.warning(
+                self, 
+                "Verification Failed", 
+                "The code you entered is invalid or has expired. Please make sure you're entering the current code from your authenticator app."
+            )
+            self.totp_input.setFocus()
+            self.totp_input.selectAll()
+            return
+            
+        # Reset password
+        try:
+            from utils.security import hash_password
+            from utils.db_context import get_db_connection
+            
+            hashed_password = hash_password(new_password)
+            
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "UPDATE users SET password_hash = ? WHERE username = ?",
+                    (hashed_password, self.username)
+                )
+                conn.commit()
+                
+            QMessageBox.information(
+                self, 
+                "Success", 
+                "Your password has been successfully reset! You can now log in with your new password."
+            )
+            self.accept()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to reset password: {str(e)}")
+            
+    def apply_theme(self):
+        """Apply theme to the dialog"""
         self.setStyleSheet("""
             QDialog {
                 background-color: white;

@@ -4,7 +4,7 @@ A desktop application for managing residential society operations built with Pyt
 
 ## Features
 
-- **User Authentication**: Secure login system with role-based access control (System Admin, Admin, Treasurer, Viewer).
+- **User Authentication**: Secure login system with role-based access control (System Admin, Admin, Treasurer, Viewer) and TOTP-based two-factor authentication
 - **Resident Management**: Add, edit, view, and search resident information with car and scooter tracking.
 - **Financial Tracking**: Record and manage payments and expenses with a ledger system.
 - **Bank Reconciliation**: Match ledger transactions with bank statements (CSV and PDF formats) to ensure financial accuracy.
@@ -307,7 +307,35 @@ This script will:
 - **Enhanced database error handling with comprehensive testing procedures**
 - **Improved data entry validation with visual feedback and comprehensive field validation**
 - **Added automatic resident sorting and refresh functionality in ledger forms**
+- **Implemented TOTP-based two-factor authentication and password reset system**
 - **Added automatic resident sorting and refresh functionality in ledger forms**
+- **Implemented TOTP-based two-factor authentication and password reset system**
+
+## Two-Factor Authentication (TOTP)
+
+The application now supports Time-Based One-Time Password (TOTP) two-factor authentication for enhanced security. This feature allows users to:
+
+- Set up TOTP using authenticator apps like Google Authenticator or Authy
+- Reset passwords securely using TOTP codes
+- Maintain account security without requiring email infrastructure
+
+### How to Set Up TOTP
+
+1. **Access Profile**: Go to the "User" menu and select "Profile"
+2. **Enable TOTP**: Click "Enable Two-Factor Authentication"
+3. **Scan QR Code**: Use your authenticator app to scan the displayed QR code
+4. **Verify Setup**: Enter the 6-digit code from your app to confirm
+5. **Complete**: TOTP is now enabled for your account
+
+### How to Reset Password with TOTP
+
+1. **Forgot Password**: On the login screen, click "Forgot Password?"
+2. **Enter Username**: Provide your username
+3. **Enter Code**: Enter the current 6-digit code from your authenticator app
+4. **Set New Password**: Enter and confirm your new password
+5. **Complete**: Your password is reset and ready to use
+
+This TOTP-based system provides strong security without requiring email infrastructure, making it ideal for desktop applications.
 
 ## Database
 
