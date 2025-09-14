@@ -98,6 +98,12 @@ class MainWindow(QMainWindow):
             audit_log_action = QAction("Audit Log Viewer", self)
             audit_log_action.triggered.connect(self.open_audit_log_viewer)
             tools_menu.addAction(audit_log_action)
+        
+        # Add User Profile option for all users
+        user_menu = menubar.addMenu("User")
+        profile_action = QAction("Profile", self)
+        profile_action.triggered.connect(self.open_user_profile)
+        user_menu.addAction(profile_action)
     
     def create_status_bar(self):
         # Create a custom status bar with user info and logout button
@@ -417,6 +423,11 @@ class MainWindow(QMainWindow):
         from gui.audit_log_viewer import AuditLogViewer
         audit_log_viewer = AuditLogViewer(self)
         audit_log_viewer.exec_()
+    
+    def open_user_profile(self):
+        from gui.user_profile_dialog import UserProfileDialog
+        profile_dialog = UserProfileDialog(self.username, self)
+        profile_dialog.exec_()
     
     def logout(self):
         self.controller.logout()
