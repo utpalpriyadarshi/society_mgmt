@@ -19,6 +19,9 @@ class ReconciliationTab(QWidget):
         self.bank_manager = BankStatementManager()
         self.reconciliation_manager = ReconciliationManager()
         self.setup_ui()
+        # Load all entries by default when the tab is initialized
+        self.load_bank_entries()
+        self.load_ledger_transactions()
     
     def setup_ui(self):
         main_layout = QVBoxLayout()
@@ -230,7 +233,8 @@ class ReconciliationTab(QWidget):
             # Refresh the bank table
             self.load_bank_entries()
         else:
-            QMessageBox.warning(self, "Import Failed", "Failed to import bank statement entries.")
+            QMessageBox.information(self, "Import Completed", 
+                                  "No new entries were imported (they may already exist).\nIf these are legitimate transactions, check if they have unique reference numbers.")
     
     def import_pdf_statement(self, file_path):
         """Import bank statement from PDF file"""

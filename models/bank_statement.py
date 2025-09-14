@@ -29,16 +29,47 @@ class BankStatementManager:
         
         try:
             imported_count = 0
+            duplicate_count = 0
             for entry in entries:
-                # Check if entry already exists (based on date, description, and amount)
-                cursor.execute('''
-                    SELECT id FROM bank_statements 
-                    WHERE date = ? AND description = ? AND amount = ?
-                ''', (entry['date'], entry['description'], entry['amount']))
+                # Check if entry already exists (enhanced logic)
+                # First check by reference number if provided
+                if entry.get('reference_number'):
+                    cursor.execute('''
+                        SELECT id FROM bank_statements 
+                        WHERE reference_number = ?
+                    ''', (entry['reference_number'],))
+                else:
+                    # Enhanced duplicate detection:
+                    # 1. Check by reference number if provided
+                    # 2. Check by exact match of date, description, and amount
+                    # 3. Check by date and amount with similar descriptions (to catch near-duplicates)
+                    cursor.execute('''
+                        SELECT id, description FROM bank_statements 
+                        WHERE date = ? AND amount = ?
+                    ''', (entry['date'], entry['amount']))
+                    
+                    existing_entries = cursor.fetchall()
+                    existing_entry = None
+                    
+                    # Check for exact description match first
+                    for existing_id, existing_desc in existing_entries:
+                        if existing_desc == entry['description']:
+                            existing_entry = (existing_id,)
+                            break
+                    
+                    # If no exact match, check for similar descriptions
+                    if not existing_entry and existing_entries:
+                        # Simple similarity check - if descriptions are very similar, consider it a duplicate
+                        from difflib import SequenceMatcher
+                        for existing_id, existing_desc in existing_entries:
+                            similarity = SequenceMatcher(None, entry['description'], existing_desc).ratio()
+                            if similarity > 0.8:  # 80% similarity threshold
+                                existing_entry = (existing_id,)
+                                break
                 
-                existing_entry = cursor.fetchone()
-                
-                if not existing_entry:
+                if existing_entry:
+                    duplicate_count += 1
+                else:
                     # Only insert if it doesn't already exist
                     cursor.execute('''
                         INSERT INTO bank_statements (date, description, amount, balance, reference_number)
