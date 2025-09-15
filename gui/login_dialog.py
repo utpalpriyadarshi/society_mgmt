@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Add the parent directory to the Python path so imports work correctly when running directly
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from PyQt5.QtWidgets import (QDialog, QLabel, QLineEdit,
                              QPushButton, QVBoxLayout, QHBoxLayout,
                              QMessageBox, QFrame, QApplication, QCheckBox, QProgressBar,
@@ -10,7 +16,6 @@ from utils.session_manager import session_manager
 from utils.db_context import get_db_connection
 from utils.config import load_config, save_config
 from datetime import datetime
-import os
 import pyotp
 
 
@@ -54,7 +59,7 @@ class LoginDialog(QDialog):
         # Title
         title_label = QLabel("Society Management System")
         title_font = QFont()
-        title_font.setPointSize(18)
+        title_font.setPointSize(22)
         title_font.setBold(True)
         title_label.setFont(title_font)
         title_label.setAlignment(Qt.AlignCenter)
@@ -315,7 +320,7 @@ class LoginDialog(QDialog):
             # Update title labels
             for child in self.findChildren(QLabel):
                 if child.text() == "Society Management System":
-                    child.setStyleSheet("color: #ecf0f1; font-size: 18px; font-weight: bold; margin-bottom: 5px;")
+                    child.setStyleSheet("color: #ecf0f1; font-size: 22px; font-weight: bold; margin-bottom: 5px;")
                 elif child.text() == "Please sign in to your account":
                     child.setStyleSheet("color: #bdc3c7; font-size: 14px; margin-bottom: 20px;")
                 elif "Forgot Password" in child.text():
@@ -464,7 +469,7 @@ class LoginDialog(QDialog):
             # Update title labels
             for child in self.findChildren(QLabel):
                 if child.text() == "Society Management System":
-                    child.setStyleSheet("color: #2c3e50; font-size: 18px; font-weight: bold; margin-bottom: 5px;")
+                    child.setStyleSheet("color: #2c3e50; font-size: 22px; font-weight: bold; margin-bottom: 5px;")
                 elif child.text() == "Please sign in to your account":
                     child.setStyleSheet("color: #7f8c8d; font-size: 14px; margin-bottom: 20px;")
                 elif "Forgot Password" in child.text():
@@ -1104,3 +1109,14 @@ class TOTPPasswordResetDialog(QDialog):
                 color: #2c3e50;
             }
         """)
+
+
+# Add this at the end of the file to make it runnable directly for testing
+if __name__ == "__main__":
+    import sys
+    from PyQt5.QtWidgets import QApplication
+    
+    app = QApplication(sys.argv)
+    dialog = LoginDialog()
+    dialog.show()
+    sys.exit(app.exec_())
