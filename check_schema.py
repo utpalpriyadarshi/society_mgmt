@@ -4,14 +4,24 @@ import sqlite3
 conn = sqlite3.connect('society_management.db')
 cursor = conn.cursor()
 
-# Get the schema for the users table
-cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'")
+# Get the schema for bank_statements table
+cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='bank_statements'")
 schema = cursor.fetchone()
 
 if schema:
-    print("Users table schema:")
+    print("Bank Statements Table Schema:")
     print(schema[0])
 else:
-    print("Users table not found")
+    print("Bank statements table not found")
+
+# Get the schema for reconciliation_history table
+cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='reconciliation_history'")
+schema = cursor.fetchone()
+
+if schema:
+    print("\nReconciliation History Table Schema:")
+    print(schema[0])
+else:
+    print("\nReconciliation history table not found")
 
 conn.close()
