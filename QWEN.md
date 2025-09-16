@@ -109,3 +109,7 @@ It's highly recommended to change this password after the first login.
 - All important user actions are logged to an audit trail.
 - Helper scripts for development and database operations are stored in the `ai_agent_utils/` directory.
 - All helper scripts created during development should be placed in the `ai_agent_utils/` directory to keep the main project directory clean and organized.
+
+**NOTE** Never run git commit or git push commands
+
+**NOTE** Always create ypur own helper files that you need to access db etc inside ai_agent_utils directory. Always search this directory whenever you want to check and query db as it already has a few python scripts for that
