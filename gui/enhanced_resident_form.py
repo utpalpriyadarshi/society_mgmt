@@ -1,4 +1,8 @@
-# gui/resident_form.py
+# gui/enhanced_resident_form.py
+"""
+Enhanced Resident Form with advanced search and filtering capabilities.
+"""
+
 from PyQt5.QtWidgets import (QWidget, QTableWidget, QTableWidgetItem,
                             QPushButton, QVBoxLayout, QHBoxLayout,
                             QLineEdit, QComboBox, QDateEdit, QLabel,
@@ -13,14 +17,14 @@ from gui.profile_photo_widget import ProfilePhotoWidget
 from gui.domestic_help_widget import DomesticHelpWidget
 
 
-class ResidentForm(QWidget):
+class EnhancedResidentForm(QWidget):
     def __init__(self, parent=None, user_role=None, current_user=None):
         super().__init__(parent)
         self.resident_manager = ResidentManager()
-        self.user_role = user_role  # Store user role to check permissions
-        self.current_user = current_user  # Store current user for audit logging
+        self.user_role = user_role
+        self.current_user = current_user
         self.current_resident_id = None
-        self.advanced_filters = {}  # Store advanced filter criteria
+        self.advanced_filters = {}
         self.current_sort_column = None
         self.current_sort_order = "ASC"
         self.setup_ui()
@@ -31,8 +35,6 @@ class ResidentForm(QWidget):
         
         # Search and filter area
         search_layout = QHBoxLayout()
-        
-        # Simple search input
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Search by Flat No, Name, Phone or Email...")
         self.search_input.textChanged.connect(self.filter_residents)
@@ -380,7 +382,9 @@ class ResidentForm(QWidget):
             # Display car numbers (first few if many)
             car_numbers = resident.car_numbers or ""
             if car_numbers:
-                # Handle both \n and \r\n line endings
+                # Handle both 
+ and 
+ line endings
                 normalized_car_numbers = car_numbers.replace('\r\n', '\n')
                 car_list = [cn.strip() for cn in normalized_car_numbers.split('\n') if cn.strip()]
                 display_cars = ", ".join(car_list[:3])  # Show first 3 car numbers
@@ -393,7 +397,9 @@ class ResidentForm(QWidget):
             # Display scooter numbers (first few if many)
             scooter_numbers = resident.scooter_numbers or ""
             if scooter_numbers:
-                # Handle both \n and \r\n line endings
+                # Handle both 
+ and 
+ line endings
                 normalized_scooter_numbers = scooter_numbers.replace('\r\n', '\n')
                 scooter_list = [sn.strip() for sn in normalized_scooter_numbers.split('\n') if sn.strip()]
                 display_scooters = ", ".join(scooter_list[:3])  # Show first 3 scooter numbers
@@ -524,6 +530,7 @@ class ResidentDialog(QDialog):
         super().__init__(parent)
         self.resident = resident
         self.user_role = user_role
+        self.domestic_help_widget = None
         self.setWindowTitle("Add Resident" if not resident else "Edit Resident")
         self.setModal(True)
         self.setup_ui()
