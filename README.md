@@ -16,6 +16,7 @@ A desktop application for managing residential society operations built with Pyt
 - **Dark Mode**: Toggle between light and dark themes for comfortable viewing in different lighting conditions.
 - **Enhanced Ledger System**: Improved ledger tables with standardized structure, user-friendly identifiers, comprehensive data validation, and automatic resident sorting with refresh functionality.
 - **Improved Bank Statement Import**: Enhanced duplicate detection to prevent importing of duplicate or near-duplicate entries.
+- **Bank Format Configuration**: Customizable bank statement format settings for better parsing accuracy.
 
 ## Technology Stack
 
@@ -112,6 +113,7 @@ The application now includes a comprehensive bank reconciliation feature that al
 - **Duplicate Prevention**: Prevents importing the same bank statement entries multiple times
 - **Audit Trail**: Tracks all reconciliation activities with timestamps and user information
 - **Standardized UI**: Consistent table structure with Serial Numbers and user-friendly identifiers
+- **Bank Format Configuration**: Customizable format settings for accurate parsing of various bank statement formats
 
 ### How to Use Bank Reconciliation
 
@@ -141,6 +143,19 @@ The application now includes a comprehensive bank reconciliation feature that al
 - Supports common transaction patterns:
   - `DD/MM/YYYY Description Amount`
   - `DD-MM-YYYY Description Amount`
+
+### Bank Format Configuration
+
+The application now includes a bank format configuration dialog that allows users to customize how bank statements are parsed:
+
+- **Customizable Date Formats**: Support for various date formats (DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, etc.)
+- **Field Order Configuration**: Define the order of fields in your bank statements
+- **Amount Format Settings**: Configure decimal and thousands separators for different currencies
+- **Currency Symbols**: Set currency symbols specific to your region
+- **Pattern Matching**: Define regex patterns for reference numbers and descriptions
+- **Negative Amount Handling**: Configure how negative amounts are represented (minus sign or parentheses)
+- **Multi-line Description Support**: Enable support for descriptions that span multiple lines
+- **Sample Text Testing**: Test your configuration with sample bank statement text
 
 ### Technical Implementation
 
@@ -311,6 +326,7 @@ This script will:
 - **Implemented TOTP-based two-factor authentication and password reset system**
 - **Added automatic resident sorting and refresh functionality in ledger forms**
 - **Implemented TOTP-based two-factor authentication and password reset system**
+- **Enhanced bank format configuration dialog with improved UI and functionality**
 
 ## Two-Factor Authentication (TOTP)
 
