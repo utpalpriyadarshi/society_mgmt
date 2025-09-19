@@ -13,7 +13,17 @@ from utils.database_exceptions import DatabaseError
 
 class Database:
     def __init__(self, db_path="society_management.db"):
-        self.db_path = db_path
+        # Ensure we're using the correct path for the database
+        if hasattr(sys, '_MEIPASS'):
+            # Running as PyInstaller executable
+            # Use the directory where the executable is located
+            executable_dir = os.path.dirname(sys.executable)
+            self.db_path = os.path.join(executable_dir, db_path)
+        else:
+            # Running in development
+            self.db_path = db_path
+            
+        print(f"Database path: {self.db_path}")
         self.apply_migrations()
         self.init_database()
     
@@ -28,6 +38,7 @@ class Database:
                 # Running in development
                 migrations_dir = os.path.join(os.path.dirname(__file__), 'ai_agent_utils', 'migrations')
             
+            print(f"Migrations directory: {migrations_dir}")
             migration_manager = MigrationManager(self.db_path, migrations_dir)
             migration_manager.apply_pending_migrations()
         except DatabaseError:

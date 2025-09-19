@@ -1,0 +1,46 @@
+# Society Management System - Deployment Summary
+
+## Files Created
+
+1. **SocietyManagementSystem.exe** - The main executable file (in dist/ directory)
+2. **SocietyManagementSystem.zip** - Zip package containing the executable and documentation
+3. **SocietyManagementSystem-Installer.exe** - Windows installer (if NSIS is installed)
+4. **build_executable.bat** - Batch file to rebuild the executable
+5. **build_installer.bat** - Batch file to rebuild the installer
+6. **installer.nsi** - NSIS installer script
+
+## Deployment Options
+
+### Option 1: Direct Execution (Simplest)
+1. Copy the `SocietyManagementSystem.exe` file to any Windows machine
+2. Double-click the executable to run the application
+
+### Option 2: Zip Package Distribution
+1. Distribute the `SocietyManagementSystem.zip` file
+2. Users extract the zip file and run `StartApplication.bat` or `SocietyManagementSystem.exe`
+
+### Option 3: Windows Installer (Requires NSIS)
+1. Install NSIS from http://nsis.sourceforge.net
+2. Run `build_installer.bat` to create the installer
+3. Distribute `SocietyManagementSystem-Installer.exe`
+4. Users run the installer to install the application
+
+## First-Time Login
+- Username: `sysadmin`
+- Password: `systemadmin`
+- IMPORTANT: Change the default password after first login
+
+## System Requirements
+- Windows 10 or higher (64-bit recommended)
+- 4GB RAM minimum (8GB recommended)
+- 100MB available disk space
+
+## Notes
+- The application will create a `society_management.db` file in the same directory as the executable on first run
+- All data is stored in this SQLite database file
+- Users should regularly backup this database file for data safety
+
+## Troubleshooting
+- If the application fails to start, ensure all required DLLs are present
+- If there are missing module errors, ensure all dependencies from requirements.txt are available
+- For permission issues, try running the application as administrator

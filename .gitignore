@@ -16,3 +16,7 @@ __pycache__/
 
 Reconciliation.docx
 *.pdf
+
+/dist
+/build
+/dist_package

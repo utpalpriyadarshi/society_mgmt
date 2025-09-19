@@ -6,7 +6,10 @@ if hasattr(sys, '_MEIPASS'):
     # Running as PyInstaller executable
     sys.path.insert(0, sys._MEIPASS)
     # Set the current working directory to the executable's directory
-    os.chdir(sys._MEIPASS)
+    os.chdir(os.path.dirname(sys.executable))
+else:
+    # Running in development
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 from PyQt5.QtWidgets import QApplication, QDialog
 from gui.login_dialog import LoginDialog
@@ -14,9 +17,10 @@ from gui.main_window import MainWindow
 from utils.security import authenticate_user
 from database import Database
 
-# Initialize database
+# Initialize database - make sure we're using the correct path
+db_path = "society_management.db"
 try:
-    db = Database()
+    db = Database(db_path)
 except Exception as e:
     print(f"Error initializing database: {e}")
     sys.exit(1)
