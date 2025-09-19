@@ -5,6 +5,7 @@ __pycache__/
 .vscode/
 /ai_agent_utils
 
+
 # Database files
 *.db
 *.db.backup
@@ -23,9 +24,62 @@ Reconciliation.docx
 /exe
 SocietyManagementSystem.zip
 
-# Large binary files
+# Large binary files and executables
 *.exe
 *.pkg
 *.zip
-SocietyManagementSystem/ 
+*.msi
+*.dmg
+*.app
+*.deb
+*.rpm
+
+# Exclude the entire SocietyManagementSystem directory
+SocietyManagementSystem/
+
+# Exclude any other large files
+*.log
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+*.patch
+
+# IDE specific files
+*.swp
+*.swo
+*.swn
+*.DS_Store
+*.localized
+Thumbs.db
+
+# Large files that might be generated
+*.dat
+*.data
+*.dump
+*.out
+*.bin
+*.img
+*.iso
+*.vmdk
+*.vdi
+*.qcow2
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.rar
+*.7z
+*.jar
+*.war
+*.ear
+*.class
+*.o
+*.a
+*.so
+*.dll
+*.dylib 
 
