@@ -21,4 +21,11 @@ Reconciliation.docx
 /build
 /dist_package
 /exe
-SocietyManagementSystem.zip 
+SocietyManagementSystem.zip
+
+# Large binary files
+*.exe
+*.pkg
+*.zip
+SocietyManagementSystem/ 
+
