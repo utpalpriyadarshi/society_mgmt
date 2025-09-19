@@ -210,8 +210,6 @@ The transaction reversal system is designed to comply with Generally Accepted Ac
 - Ensuring proper documentation and authorization
 - Following standard accounting period practices
 
-For detailed technical information about the implementation, see [TRANSACTION_REVERSAL_PROCEDURE.md](TRANSACTION_REVERSAL_PROCEDURE.md).
-
 ## Ledger Improvements
 
 The application's ledger system has been enhanced with several improvements:
@@ -245,6 +243,10 @@ The ledger entry forms (Payment and Expense) now feature improved resident manag
 - **Refresh Button**: Added "Refresh Resident List" buttons to update resident lists when changes occur in the Resident Management module
 - **Selection Preservation**: Current selections are maintained when refreshing resident lists
 - **Consistent Experience**: All ledger entry points show the same sorted resident list
+
+## Reports
+
+The application generates various detailed reports:
 
 1. **Ledger Report**: Complete transaction history with running balances and date range filtering.
 2. **Outstanding Dues Report**: Lists residents who have not paid maintenance fees, showing the number of months due and the total amount owed, with date range filtering.
@@ -288,19 +290,6 @@ The application implements login security measures to protect against unauthoriz
 - **Failed Attempt Tracking**: The system tracks failed login attempts for each user
 - **Automatic Unlock**: Locked accounts are automatically unlocked after the lockout period expires
 
-### Resetting Login Security
-
-If accounts become locked and you need to reset the security measures, you can use the provided reset script:
-
-```bash
-python reset_login_security.py
-```
-
-This script will:
-- Reset failed login attempts for all users to 0
-- Unlock any accounts that were locked due to failed attempts
-- Display the security status before and after the reset
-
 ## Recent Improvements
 
 - Enhanced watermark visibility by placing it at three horizontal locations (top, middle, and bottom) instead of a single rotated watermark
@@ -314,16 +303,12 @@ This script will:
 - Implemented proper error handling and user feedback for all report generation operations
 - Added database backup functionality accessible through the File menu
 - Implemented login security with account lockout after multiple failed attempts
-- Added login security reset functionality
 - Added dark mode toggle for improved user experience in different lighting conditions
-- **Modernized login page with two-section design (form on left, image on right)** - See [LOGIN_PAGE_IMPROVEMENTS.md](LOGIN_PAGE_IMPROVEMENTS.md) for details
 - **Added bank reconciliation feature with CSV and PDF import support**
 - **Enhanced resident management with car and scooter number tracking**
 - **Implemented comprehensive transaction reversal system**
 - **Enhanced database error handling with comprehensive testing procedures**
 - **Improved data entry validation with visual feedback and comprehensive field validation**
-- **Added automatic resident sorting and refresh functionality in ledger forms**
-- **Implemented TOTP-based two-factor authentication and password reset system**
 - **Added automatic resident sorting and refresh functionality in ledger forms**
 - **Implemented TOTP-based two-factor authentication and password reset system**
 - **Enhanced bank format configuration dialog with improved UI and functionality**
@@ -362,10 +347,12 @@ Helper scripts for development and database setup are available in the `ai_agent
 
 ## Testing
 
-Comprehensive testing procedures are available for verifying the application's functionality:
+The application includes several test scripts for verifying functionality:
 
-1. **Database Error Handling Testing**: See [DATABASE_ERROR_HANDLING_TESTING_PROCEDURE.md](DATABASE_ERROR_HANDLING_TESTING_PROCEDURE.md) and [DATABASE_ERROR_HANDLING_TESTING_USAGE.md](DATABASE_ERROR_HANDLING_TESTING_USAGE.md)
-2. **Login Security Testing**: Run `python test_login_security.py`
+1. **Transaction Reversal Testing**: Run `python test_reversal_functionality.py`
+2. **Bank Reconciliation Testing**: Run `python test_reconciliation.py`
+3. **Bank Matching Rules Testing**: Run `python test_matching_rules.py`
+4. **Simple Reconciliation Testing**: Run `python simple_reconciliation_test.py`
 
 ## License
 
